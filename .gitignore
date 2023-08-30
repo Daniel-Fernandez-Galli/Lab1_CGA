@@ -1,0 +1,8 @@
+.vs/
+OpenGL-basico/Debug/
+OpenGL-basico/Release/
+*.pdb
+*.ipdb
+*.iobj
+*.ilk
+*.exe
