@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <fstream>
+#include "GLTF_loading_test.h"
 
 using namespace std;
 
@@ -149,21 +150,13 @@ GLuint initShaders(char* vertFile, char* fragFile)
 
 void init(void)
 {
-	const GLfloat pyramid[18] = {     // a simple pyramid
-		0.0, 0.5, 0.0, // top
-		-1.0,  -0.5, 1.0, // front bottom left
-		1.0, -0.5, 1.0, // front bottom right
-		1.0,  -0.5, -1.0, // back bottom right
-		-1.0, -0.5, -1.0, // back bottom left
-		-1.0, -0.5, 1.0 }; // front bottom left
-	const GLfloat colors[18] = {
-		0.0,  0.0,  0.0, // black
-		1.0,  0.0,  0.0, // red
-		0.0,  1.0,  0.0, // green
-		0.0,  0.0,  1.0, // blue
-		1.0,  1.0,  0.0,
-		1.0,  0.0,  0.0 }; // yellow
+	std::vector<float> cube_data = test_init_cube();
+	GLfloat* cube = cube_data.data();
 
+	GLfloat colors[108];
+	for (int i = 0; i < 108; i++) {
+		colors[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	}
 
 	shaderprogram = initShaders("../simple.vert", "../simple.frag"); // Create and start shader program
 	glGenVertexArrays(1, &vao); // allocate & assign a Vertex Array Object (VAO)
@@ -171,12 +164,12 @@ void init(void)
 	glGenBuffers(2, vbo); // allocate two Vertex Buffer Objects (VBO)
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // bind first VBO as active buffer object
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GLfloat), pyramid, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);     // Enable attribute index 0 (position)
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // bind second VBO as active buffer object
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(1);    // Enable attribute index 1 (color)
 
@@ -191,7 +184,7 @@ void draw(SDL_Window* window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear window
 
 	// Create perspective projection matrix
-	glm::mat4 projection = glm::perspective(45.0f, 4.0f / 3.0f, 1.0f, 100.f);
+	glm::mat4 projection = glm::perspective(45.0f, 1.0f, 1.0f, 100.f);
 
 	// Create view matrix for the camera
 	r += 0.001; //for camera rotation
@@ -212,7 +205,7 @@ void draw(SDL_Window* window)
 	int modelIndex = glGetUniformLocation(shaderprogram, "model");
 	glUniformMatrix4fv(modelIndex, 1, GL_FALSE, glm::value_ptr(model));
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 6); // draw the pyramid
+	glDrawArrays(GL_TRIANGLES, 0, 36); // draw
 
 	SDL_GL_SwapWindow(window); // swap buffers
 }
