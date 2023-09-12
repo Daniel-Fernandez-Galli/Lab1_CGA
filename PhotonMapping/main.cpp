@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include "GLTF_loading_test.h"
+#include "embree4/rtcore.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ GLuint shaderprogram; // handle for shader program
 GLuint vao, vbo[2]; // handles for our VAO and two VBOs
 float r = 0;
 
-  
+
 // loadFile - loads text file into char* fname
 // allocates memory - so need to delete after use
 const char* loadFile(char* fname)
@@ -222,19 +223,103 @@ void cleanup(void)
 	glDeleteVertexArrays(1, &vao);
 }
 
+void test_embree_render(RTCScene scene, SDL_Renderer* renderer, SDL_Texture* texture) {
 
-int main(int argc, char *argv[]) {
+	uint32_t* pixels = new uint32_t[600 * 600];
+
+	for (int x = 0; x < 600; x++) {
+		for (int y = 0; y < 600; y++) {
+			struct RTCRayHit rayhit;
+			rayhit.ray.org_x = 0;
+			rayhit.ray.org_y = 0;
+			rayhit.ray.org_z = 0;
+			rayhit.ray.dir_x = x - 300;
+			rayhit.ray.dir_y = y - 300;
+			rayhit.ray.dir_z = 200;
+			rayhit.ray.tnear = 0;
+			rayhit.ray.tfar = std::numeric_limits<float>::infinity();
+			rayhit.ray.mask = -1;
+			rayhit.ray.flags = 0;
+			rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+			rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+			rtcIntersect1(scene, &rayhit);
+
+			if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
+			{
+				uint32_t r = rayhit.hit.Ng_x != 0 ? 0xFF : 0;
+				uint32_t g = rayhit.hit.Ng_y != 0 ? 0xFF : 0;
+				uint32_t b = rayhit.hit.Ng_z != 0 ? 0xFF : 0;
+				pixels[600 * y + x] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+			}
+			else {
+				pixels[600 * y + x] = 0xFFFFFFFF; //white
+			}
+		}
+	}
+	SDL_UpdateTexture(texture, NULL, pixels, 600 * sizeof(uint32_t));
+	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+	delete[] pixels;
+}
+
+RTCScene test_embree_init_scene(RTCDevice d) {
+	RTCScene scene = rtcNewScene(d);
+	RTCGeometry geo = rtcNewGeometry(d, RTC_GEOMETRY_TYPE_TRIANGLE);
+
+	std::vector<float> cube = test_init_cube();
+	for (int i = 0; i < cube.size(); i++) {
+		cube[i] *= 10.f;
+	}
+
+	float* vertices = cube.data();
+
+	rtcSetSharedGeometryBuffer(
+		geo,
+		RTC_BUFFER_TYPE_VERTEX,   // Buffer type (vertices)
+		0,                        // Slot
+		RTC_FORMAT_FLOAT3,        // Data format (3 floats for x, y, z)
+		vertices,                 // Pointer to vertex data
+		0,                        // Byte offset (0 since it's the first buffer)
+		sizeof(float) * 3,        // Stride (size of a single vertex)
+		36                         // Number of vertices
+	);
+
+	unsigned int* indices = new unsigned int[108];
+	for (int i = 0; i < 108; i++) {
+		indices[i] = i;
+	}
+
+	rtcSetSharedGeometryBuffer(
+		geo,
+		RTC_BUFFER_TYPE_INDEX,    // Buffer type (indices)
+		0,                        // Slot
+		RTC_FORMAT_UINT3,         // Data format (3 unsigned ints for indices)
+		indices,                  // Pointer to index data
+		0,                        // Byte offset (0 since it's the first buffer)
+		sizeof(unsigned int) * 3, // Stride (size of a single index)
+		36                         // Number of indices
+	);
+
+	rtcCommitGeometry(geo);
+	rtcAttachGeometry(scene, geo);
+	rtcReleaseGeometry(geo);
+	rtcCommitScene(scene);
+	return scene;
+}
+
+int main(int argc, char* argv[]) {
 	//INICIALIZACION
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
 		SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
 		return 1;
 	}
 
-	SDL_Window *window = NULL;
+	SDL_Window* window = NULL;
 	SDL_GLContext gl_context;
 
-	window = SDL_CreateWindow("Ventana", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-																	800, 800, SDL_WINDOW_OPENGL);
+	window = SDL_CreateWindow("Ventana", 50, SDL_WINDOWPOS_UNDEFINED,
+		600, 600, SDL_WINDOW_OPENGL);
 
 	gl_context = SDL_GL_CreateContext(window);
 	//disable limit of 60fps
@@ -247,6 +332,14 @@ int main(int argc, char *argv[]) {
 	printf("Version:  %s\n", glGetString(GL_VERSION));
 
 	init();
+	RTCDevice device = rtcNewDevice(nullptr);
+	RTCScene scene = test_embree_init_scene(device);
+
+	/* Embree window init */
+	SDL_Window* embree_window = SDL_CreateWindow("Ventana de SDL", 700, SDL_WINDOWPOS_UNDEFINED, 600, 600, 0);
+	SDL_Renderer* embree_renderer = SDL_CreateRenderer(embree_window, -1, SDL_RENDERER_ACCELERATED);
+	SDL_Texture* embree_texture = SDL_CreateTexture(embree_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
+
 
 	bool running = true; // set running to true
 	SDL_Event sdlEvent;  // variable to detect SDL events
@@ -255,15 +348,17 @@ int main(int argc, char *argv[]) {
 	{
 		while (SDL_PollEvent(&sdlEvent))
 		{
-			if (sdlEvent.type == SDL_QUIT)
+			if (sdlEvent.type == SDL_WINDOWEVENT && sdlEvent.window.event == SDL_WINDOWEVENT_CLOSE)
 				running = false;
 		}
 		//update();
 		draw(window); // call the draw function
+		test_embree_render(scene, embree_renderer, embree_texture);
 	}
 
 	cleanup();
-
+	rtcReleaseScene(scene);
+	rtcReleaseDevice(device);
 	//FIN LOOP PRINCIPAL
 	SDL_GL_DeleteContext(gl_context);
 	SDL_DestroyWindow(window);
