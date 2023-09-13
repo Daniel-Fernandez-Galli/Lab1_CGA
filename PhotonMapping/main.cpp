@@ -13,8 +13,25 @@
 #include <fstream>
 #include "GLTF_loading_test.h"
 #include "embree4/rtcore.h"
+#include "nanoflann.hpp"
 
 using namespace std;
+using namespace nanoflann;
+struct PointCloud {
+	vector<vector<float>> points;
+	inline size_t kdtree_get_point_count() const {
+		return points.size();
+	}
+	template <class B>
+	inline bool kdtree_get_bbox(B& bbox) const
+	{
+		return false;
+	}
+	inline float kdtree_get_pt(const size_t idx, const size_t dim) const
+	{
+		return points[idx][dim];
+	}
+};
 
 // global variables - normally would avoid globals, using in this demo
 GLuint shaderprogram; // handle for shader program
@@ -340,6 +357,37 @@ int main(int argc, char* argv[]) {
 	SDL_Renderer* embree_renderer = SDL_CreateRenderer(embree_window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_Texture* embree_texture = SDL_CreateTexture(embree_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
 
+	/* Nanoflann */
+
+	PointCloud cloud;
+	cloud.points.push_back({ 1.0, 2.0, 3.0 });
+	cloud.points.push_back({ 4.0, 5.0, 6.0 });
+	cloud.points.push_back({ 7.0, 8.0, 9.0 });
+	typedef KDTreeSingleIndexAdaptor<
+		L2_Simple_Adaptor<float, PointCloud>,
+		PointCloud,
+		3 /* dimension */
+	> KDTree;
+
+	KDTree index(3, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+	index.buildIndex();
+
+	vector<float> query_point = { 7.0, 6.0, 9.0 };
+	size_t num_results = 1;
+	vector<size_t> nearest_indices(num_results);
+	vector<float> nearest_distances(num_results);
+
+	nanoflann::KNNResultSet<float> resultSet(num_results);
+	resultSet.init(&nearest_indices[0], &nearest_distances[0]);
+
+	index.findNeighbors(resultSet, &query_point[0], nanoflann::SearchParameters(10));
+
+	// Print the nearest neighbor and its distance
+	cout << "Nearest neighbor index: " << nearest_indices[0] << endl;
+	cout << "Distance to nearest neighbor: " << nearest_distances[0] << endl;
+
+
+	/**/
 
 	bool running = true; // set running to true
 	SDL_Event sdlEvent;  // variable to detect SDL events
