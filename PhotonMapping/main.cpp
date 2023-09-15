@@ -13,28 +13,11 @@
 #include <fstream>
 #include "GLTF_loading_test.h"
 #include "embree4/rtcore.h"
-#include "nanoflann.hpp"
 
 #include "utils.h"
 #include "KDTree.h"
 
 using namespace std;
-using namespace nanoflann;
-struct PointCloud {
-	vector<vector<float>> points;
-	inline size_t kdtree_get_point_count() const {
-		return points.size();
-	}
-	template <class B>
-	inline bool kdtree_get_bbox(B& bbox) const
-	{
-		return false;
-	}
-	inline float kdtree_get_pt(const size_t idx, const size_t dim) const
-	{
-		return points[idx][dim];
-	}
-};
 
 // global variables - normally would avoid globals, using in this demo
 GLuint shaderprogram; // handle for shader program
@@ -365,24 +348,19 @@ int main(int argc, char* argv[]) {
 	SDL_Renderer* embree_renderer = SDL_CreateRenderer(embree_window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_Texture* embree_texture = SDL_CreateTexture(embree_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
 
-	/* Nanoflann */
+	/* photon kd tree test */
 
 	std::vector<Photon> photons;
 	photons.push_back(Photon({1.0f, 2.0f, 3.0f}, {1.0f, 0.0f, 0.0f}, {255, 0, 0, 255}));
 	photons.push_back(Photon({4.0f, 5.0f, 6.0f}, {0.0f, 1.0f, 0.0f}, {0, 255, 0, 255}));
 	photons.push_back(Photon({7.0f, 8.0f, 9.0f}, {0.0f, 0.0f, 1.0f}, {0, 0, 255, 255}));
-
 	KDTree tree;
 	tree.init(photons);
-
 	math::Vector query_point = { 7.0, 6.0, 9.0 };
-
 	std::vector<SearchResult> res = tree.search(query_point, 5.0f);
-
 	// Print the nearest neighbor and its distance
 	cout << "Nearest neighbor index: " << res[0].index << endl;
 	cout << "Distance to nearest neighbor: " << res[0].distance_squared << endl;
-
 
 	/**/
 

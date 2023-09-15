@@ -2,7 +2,6 @@
 #define KDTREE_H
 
 #include "Photon.h"
-#include "nanoflann.hpp"
 
 struct PhotonMap {
 
@@ -23,10 +22,6 @@ struct PhotonMap {
 	}
 };
 
-using namespace nanoflann;
-
-using Index_t = KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<float, PhotonMap>, PhotonMap, 3>;
-
 struct SearchResult {
 	int index;
 	float distance_squared;
@@ -36,7 +31,7 @@ class KDTree {
 
 private:
 
-	std::unique_ptr<Index_t> index;
+	std::shared_ptr<void> index; //Implementation dependent
 
 	PhotonMap map;
 
