@@ -15,6 +15,9 @@
 #include "embree4/rtcore.h"
 #include "nanoflann.hpp"
 
+#include "utils.h"
+#include "KDTree.h"
+
 using namespace std;
 using namespace nanoflann;
 struct PointCloud {
@@ -326,6 +329,11 @@ RTCScene test_embree_init_scene(RTCDevice d) {
 }
 
 int main(int argc, char* argv[]) {
+
+	math::Vector hola{ 1, 2, 3, 4,5,6 };
+
+	cout << hola << endl;
+
 	//INICIALIZACION
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
 		SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
@@ -359,32 +367,21 @@ int main(int argc, char* argv[]) {
 
 	/* Nanoflann */
 
-	PointCloud cloud;
-	cloud.points.push_back({ 1.0, 2.0, 3.0 });
-	cloud.points.push_back({ 4.0, 5.0, 6.0 });
-	cloud.points.push_back({ 7.0, 8.0, 9.0 });
-	typedef KDTreeSingleIndexAdaptor<
-		L2_Simple_Adaptor<float, PointCloud>,
-		PointCloud,
-		3 /* dimension */
-	> KDTree;
+	std::vector<Photon> photons;
+	photons.push_back(Photon({1.0f, 2.0f, 3.0f}, {1.0f, 0.0f, 0.0f}, {255, 0, 0, 255}));
+	photons.push_back(Photon({4.0f, 5.0f, 6.0f}, {0.0f, 1.0f, 0.0f}, {0, 255, 0, 255}));
+	photons.push_back(Photon({7.0f, 8.0f, 9.0f}, {0.0f, 0.0f, 1.0f}, {0, 0, 255, 255}));
 
-	KDTree index(3, cloud, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-	index.buildIndex();
+	KDTree tree;
+	tree.init(photons);
 
-	vector<float> query_point = { 7.0, 6.0, 9.0 };
-	size_t num_results = 1;
-	vector<size_t> nearest_indices(num_results);
-	vector<float> nearest_distances(num_results);
+	math::Vector query_point = { 7.0, 6.0, 9.0 };
 
-	nanoflann::KNNResultSet<float> resultSet(num_results);
-	resultSet.init(&nearest_indices[0], &nearest_distances[0]);
-
-	index.findNeighbors(resultSet, &query_point[0], nanoflann::SearchParameters(10));
+	std::vector<SearchResult> res = tree.search(query_point, 5.0f);
 
 	// Print the nearest neighbor and its distance
-	cout << "Nearest neighbor index: " << nearest_indices[0] << endl;
-	cout << "Distance to nearest neighbor: " << nearest_distances[0] << endl;
+	cout << "Nearest neighbor index: " << res[0].index << endl;
+	cout << "Distance to nearest neighbor: " << res[0].distance_squared << endl;
 
 
 	/**/
