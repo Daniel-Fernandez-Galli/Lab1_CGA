@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <fstream>
-#include "GLTF_loading_test.h"
 #include "embree4/rtcore.h"
 
 #include "utils.h"
@@ -154,31 +153,31 @@ GLuint initShaders(char* vertFile, char* fragFile)
 
 void init(void)
 {
-	std::vector<float> cube_data = test_init_cube();
-	GLfloat* cube = cube_data.data();
+	//std::vector<float> cube_data = test_init_cube();
+	//GLfloat* cube = cube_data.data();
 
-	GLfloat colors[108];
-	for (int i = 0; i < 108; i++) {
-		colors[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-	}
+	//GLfloat colors[108];
+	//for (int i = 0; i < 108; i++) {
+	//	colors[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+	//}
 
-	shaderprogram = initShaders("../simple.vert", "../simple.frag"); // Create and start shader program
-	glGenVertexArrays(1, &vao); // allocate & assign a Vertex Array Object (VAO)
-	glBindVertexArray(vao); // bind VAO as current object
-	glGenBuffers(2, vbo); // allocate two Vertex Buffer Objects (VBO)
+	//shaderprogram = initShaders("../simple.vert", "../simple.frag"); // Create and start shader program
+	//glGenVertexArrays(1, &vao); // allocate & assign a Vertex Array Object (VAO)
+	//glBindVertexArray(vao); // bind VAO as current object
+	//glGenBuffers(2, vbo); // allocate two Vertex Buffer Objects (VBO)
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // bind first VBO as active buffer object
-	glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(0);     // Enable attribute index 0 (position)
+	//glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // bind first VBO as active buffer object
+	//glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(0);     // Enable attribute index 0 (position)
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // bind second VBO as active buffer object
-	glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(1);    // Enable attribute index 1 (color)
+	//glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // bind second VBO as active buffer object
+	//glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(1);    // Enable attribute index 1 (color)
 
-	glEnable(GL_DEPTH_TEST); // enable depth testing
-	//glEnable(GL_CULL_FACE); // enable back face culling - try this and see what happens!
+	//glEnable(GL_DEPTH_TEST); // enable depth testing
+	////glEnable(GL_CULL_FACE); // enable back face culling - try this and see what happens!
 }
 
 
@@ -268,46 +267,46 @@ void test_embree_render(RTCScene scene, SDL_Renderer* renderer, SDL_Texture* tex
 
 RTCScene test_embree_init_scene(RTCDevice d) {
 	RTCScene scene = rtcNewScene(d);
-	RTCGeometry geo = rtcNewGeometry(d, RTC_GEOMETRY_TYPE_TRIANGLE);
+	//RTCGeometry geo = rtcNewGeometry(d, RTC_GEOMETRY_TYPE_TRIANGLE);
 
-	std::vector<float> cube = test_init_cube();
-	for (int i = 0; i < cube.size(); i++) {
-		cube[i] *= 10.f;
-	}
+	//std::vector<float> cube = test_init_cube();
+	//for (int i = 0; i < cube.size(); i++) {
+	//	cube[i] *= 10.f;
+	//}
 
-	float* vertices = cube.data();
+	//float* vertices = cube.data();
 
-	rtcSetSharedGeometryBuffer(
-		geo,
-		RTC_BUFFER_TYPE_VERTEX,   // Buffer type (vertices)
-		0,                        // Slot
-		RTC_FORMAT_FLOAT3,        // Data format (3 floats for x, y, z)
-		vertices,                 // Pointer to vertex data
-		0,                        // Byte offset (0 since it's the first buffer)
-		sizeof(float) * 3,        // Stride (size of a single vertex)
-		36                         // Number of vertices
-	);
+	//rtcSetSharedGeometryBuffer(
+	//	geo,
+	//	RTC_BUFFER_TYPE_VERTEX,   // Buffer type (vertices)
+	//	0,                        // Slot
+	//	RTC_FORMAT_FLOAT3,        // Data format (3 floats for x, y, z)
+	//	vertices,                 // Pointer to vertex data
+	//	0,                        // Byte offset (0 since it's the first buffer)
+	//	sizeof(float) * 3,        // Stride (size of a single vertex)
+	//	36                         // Number of vertices
+	//);
 
-	unsigned int* indices = new unsigned int[108];
-	for (int i = 0; i < 108; i++) {
-		indices[i] = i;
-	}
+	//unsigned int* indices = new unsigned int[108];
+	//for (int i = 0; i < 108; i++) {
+	//	indices[i] = i;
+	//}
 
-	rtcSetSharedGeometryBuffer(
-		geo,
-		RTC_BUFFER_TYPE_INDEX,    // Buffer type (indices)
-		0,                        // Slot
-		RTC_FORMAT_UINT3,         // Data format (3 unsigned ints for indices)
-		indices,                  // Pointer to index data
-		0,                        // Byte offset (0 since it's the first buffer)
-		sizeof(unsigned int) * 3, // Stride (size of a single index)
-		36                         // Number of indices
-	);
+	//rtcSetSharedGeometryBuffer(
+	//	geo,
+	//	RTC_BUFFER_TYPE_INDEX,    // Buffer type (indices)
+	//	0,                        // Slot
+	//	RTC_FORMAT_UINT3,         // Data format (3 unsigned ints for indices)
+	//	indices,                  // Pointer to index data
+	//	0,                        // Byte offset (0 since it's the first buffer)
+	//	sizeof(unsigned int) * 3, // Stride (size of a single index)
+	//	36                         // Number of indices
+	//);
 
-	rtcCommitGeometry(geo);
-	rtcAttachGeometry(scene, geo);
-	rtcReleaseGeometry(geo);
-	rtcCommitScene(scene);
+	//rtcCommitGeometry(geo);
+	//rtcAttachGeometry(scene, geo);
+	//rtcReleaseGeometry(geo);
+	//rtcCommitScene(scene);
 	return scene;
 }
 
@@ -375,8 +374,8 @@ int main(int argc, char* argv[]) {
 				running = false;
 		}
 		//update();
-		draw(window); // call the draw function
-		test_embree_render(scene, embree_renderer, embree_texture);
+		//draw(window); // call the draw function
+		//test_embree_render(scene, embree_renderer, embree_texture);
 	}
 
 	cleanup();
