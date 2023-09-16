@@ -54,6 +54,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\libraries\glad;..\libraries\glm;..\libraries\JSON;..\libraries\stb_image;..\libraries\TinyGLTF;..\libraries\Embree\include;..\libraries\nanoflann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -70,6 +71,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\libraries\glad;..\libraries\glm;..\libraries\JSON;..\libraries\stb_image;..\libraries\TinyGLTF;..\libraries\Embree\include;..\libraries\nanoflann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -88,14 +90,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\libraries\glad\glad\glad.c" />
-    <ClCompile Include="GLTF_loading_test.cpp" />
+    <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Photon.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GLTF_loading_test.h" />
+    <ClInclude Include="FileLoader.h" />
     <ClInclude Include="KDTree.h" />
     <ClInclude Include="Photon.h" />
     <ClInclude Include="utils.h" />
