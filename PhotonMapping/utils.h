@@ -59,16 +59,16 @@ namespace math {
 }
 
 /* 32-bit Color */
-const struct Color {
+struct Color {
 	uint8_t r, g, b, a;
 
-	constexpr float fr() { return r * 1.0f / 255.0f; }
-	constexpr float fg() { return g * 1.0f / 255.0f; }
-	constexpr float fb() { return b * 1.0f / 255.0f; }
-	constexpr float fa() { return a * 1.0f / 255.0f; }
+	float fr() { return r * 1.0f / 255.0f; }
+	float fg() { return g * 1.0f / 255.0f; }
+	float fb() { return b * 1.0f / 255.0f; }
+	float fa() { return a * 1.0f / 255.0f; }
 
-	constexpr uint32_t get_rgba() { return r << 24 | g << 16 | b << 8 | a; }
-	constexpr uint32_t get_argb() { return a << 24 | r << 16 | g << 8 | b; }
+	uint32_t get_rgba() { return r << 24 | g << 16 | b << 8 | a; }
+	uint32_t get_argb() { return a << 24 | r << 16 | g << 8 | b; }
 
 };
 
