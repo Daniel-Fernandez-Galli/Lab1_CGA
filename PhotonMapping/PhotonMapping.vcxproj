@@ -93,12 +93,14 @@
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Photon.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileLoader.h" />
     <ClInclude Include="KDTree.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Photon.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>

@@ -1,14 +1,13 @@
 #ifndef FILELOADER_H
 #define FILELOADER_H
 
+#include "tiny_gltf.h"
 #include <string>
 
-namespace FileLoader
+namespace File
 {
-	/* Contains the data of a binray gltf 2.0 (.glb) file */
-	struct GLB_t;
 
-	GLB_t load_glb(std::string path);
+	tinygltf::Model load_glb(std::string path);
 
 }
 

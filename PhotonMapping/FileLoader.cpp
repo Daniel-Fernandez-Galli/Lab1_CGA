@@ -10,16 +10,11 @@
 
 #include "FileLoader.h"
 
-#include "tiny_gltf.h"
-
-using namespace FileLoader;
+using namespace File;
 using namespace tinygltf;
 
-struct FileLoader::GLB_t {
-	Model model;
-};
 
-GLB_t FileLoader::load_glb(std::string path)
+tinygltf::Model File::load_glb(std::string path)
 {
 	Model model;
 	TinyGLTF loader;
@@ -41,5 +36,5 @@ GLB_t FileLoader::load_glb(std::string path)
 		abort();
 	}
 
-	return { model };
+	return model;
 }
