@@ -9,19 +9,19 @@ class Photon
 {
 private:
 
-	Vector position;
+	Vector3 position;
 
-	Vector direction;
+	Vector3 direction;
 
 	Color color;
 
 public:
 
-	Photon(Vector pos, Vector dir, Color col);
+	Photon(Vector3 pos, Vector3 dir, Color col);
 
-	Vector get_position() const;
+	Vector3 get_position() const;
 
-	Vector get_direction() const;
+	Vector3 get_direction() const;
 
 	Color get_color() const;
 

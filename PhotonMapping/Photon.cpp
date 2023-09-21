@@ -1,18 +1,18 @@
 #include "Photon.h"
 
-Photon::Photon(Vector pos, Vector dir, Color col) : position(pos), direction(dir), color(col) {}
+Photon::Photon(Vector3 pos, Vector3 dir, Color col) : position(pos), direction(dir), color(col) {}
 
-Vector Photon::get_position() const
+Vector3 Photon::get_position() const
 {
 	return position;
+}
+
+Vector3 Photon::get_direction() const
+{
+	return direction;
 }
 
 Color Photon::get_color() const
 {
 	return color;
-}
-
-Vector Photon::get_direction() const
-{
-	return direction;
 }
