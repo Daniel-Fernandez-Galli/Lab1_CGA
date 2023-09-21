@@ -117,3 +117,7 @@ math::Vector math::cross_product(const Vector& v1, const Vector& v2) {
 
 	return ret;
 }
+
+math::Vector3::Vector3(float x, float y, float z) : Vector{x,y,z}, x(x), y(y), z(z){}
+
+math::Vector2::Vector2(float x, float y) : Vector{x,y}, x(x), y(y) {}

@@ -56,6 +56,19 @@ namespace math {
 
 	/* Only supports 3D Vectors */
 	Vector cross_product(const Vector& v1, const Vector& v2);
+
+	struct Vector3 : Vector {
+		float x;
+		float y;
+		float z;
+		Vector3(float x = 0, float y = 0, float z = 0);
+	};
+
+	struct Vector2 : Vector {
+		float x;
+		float y;
+		Vector2(float x = 0, float y = 0);
+	};
 }
 
 /* 32-bit Color */
@@ -70,6 +83,21 @@ struct Color {
 	uint32_t get_rgba() { return r << 24 | g << 16 | b << 8 | a; }
 	uint32_t get_argb() { return a << 24 | r << 16 | g << 8 | b; }
 
+};
+
+struct Ray {
+	math::Vector3 origin;
+	math::Vector3 direction;
+};
+
+struct Hit {
+	math::Vector3 normal;
+	math::Vector2 uv;
+	struct Material {
+		float metallic;
+		float roughness;
+		bool double_sided;
+	} material;
 };
 
 #endif
