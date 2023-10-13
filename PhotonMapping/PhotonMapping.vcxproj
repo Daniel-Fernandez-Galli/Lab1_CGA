@@ -91,10 +91,8 @@
   <ItemGroup>
     <ClCompile Include="..\libraries\glad\glad\glad.c" />
     <ClCompile Include="File.cpp" />
-    <ClCompile Include="GLTF_loading_test.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Photon.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="utils.cpp" />
@@ -102,7 +100,6 @@
   <ItemGroup>
     <ClInclude Include="File.h" />
     <ClInclude Include="KDTree.h" />
-    <ClInclude Include="Model.h" />
     <ClInclude Include="Photon.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="utils.h" />

@@ -56,12 +56,6 @@ GLTF_t* File::load_glb(std::string path)
 	return new GLTF_t{ m_model };
 }
 
-std::vector<geometry::Mesh> File::extract_meshes(GLTF_t* file)
-{
-	std::vector<geometry::Mesh> meshes;
-	return meshes;
-}
-
 std::vector<geometry::Mesh> File::extract_meshes(GLTF_t* file, unsigned int scene_index)
 {
 	std::vector<geometry::Mesh> meshes;

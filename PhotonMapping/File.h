@@ -10,8 +10,6 @@ namespace File
 
 	GLTF_t* load_glb(std::string path);
 
-	std::vector<geometry::Mesh> extract_meshes(GLTF_t* file);
-
 	std::vector<geometry::Mesh> extract_meshes(GLTF_t* file, unsigned int scene_index);
 
 }
