@@ -15,6 +15,9 @@
 
 #include "utils.h"
 #include "KDTree.h"
+#include "Model.h"
+#include "File.h"
+#include "GLTF_loading_test.h"
 
 using namespace std;
 
@@ -267,54 +270,51 @@ void test_embree_render(RTCScene scene, SDL_Renderer* renderer, SDL_Texture* tex
 
 RTCScene test_embree_init_scene(RTCDevice d) {
 	RTCScene scene = rtcNewScene(d);
-	//RTCGeometry geo = rtcNewGeometry(d, RTC_GEOMETRY_TYPE_TRIANGLE);
+	RTCGeometry geo = rtcNewGeometry(d, RTC_GEOMETRY_TYPE_TRIANGLE);
 
-	//std::vector<float> cube = test_init_cube();
-	//for (int i = 0; i < cube.size(); i++) {
-	//	cube[i] *= 10.f;
-	//}
+	std::vector<float> cube = test_init_cube();
+	for (int i = 0; i < cube.size(); i++) {
+		cube[i] *= 10.f;
+	}
 
-	//float* vertices = cube.data();
+	float* vertices = cube.data();
 
-	//rtcSetSharedGeometryBuffer(
-	//	geo,
-	//	RTC_BUFFER_TYPE_VERTEX,   // Buffer type (vertices)
-	//	0,                        // Slot
-	//	RTC_FORMAT_FLOAT3,        // Data format (3 floats for x, y, z)
-	//	vertices,                 // Pointer to vertex data
-	//	0,                        // Byte offset (0 since it's the first buffer)
-	//	sizeof(float) * 3,        // Stride (size of a single vertex)
-	//	36                         // Number of vertices
-	//);
+	rtcSetSharedGeometryBuffer(
+		geo,
+		RTC_BUFFER_TYPE_VERTEX,   // Buffer type (vertices)
+		0,                        // Slot
+		RTC_FORMAT_FLOAT3,        // Data format (3 floats for x, y, z)
+		vertices,                 // Pointer to vertex data
+		0,                        // Byte offset (0 since it's the first buffer)
+		sizeof(float) * 3,        // Stride (size of a single vertex)
+		36                         // Number of vertices
+	);
 
-	//unsigned int* indices = new unsigned int[108];
-	//for (int i = 0; i < 108; i++) {
-	//	indices[i] = i;
-	//}
+	unsigned int* indices = new unsigned int[108];
+	for (int i = 0; i < 108; i++) {
+		indices[i] = i;
+	}
 
-	//rtcSetSharedGeometryBuffer(
-	//	geo,
-	//	RTC_BUFFER_TYPE_INDEX,    // Buffer type (indices)
-	//	0,                        // Slot
-	//	RTC_FORMAT_UINT3,         // Data format (3 unsigned ints for indices)
-	//	indices,                  // Pointer to index data
-	//	0,                        // Byte offset (0 since it's the first buffer)
-	//	sizeof(unsigned int) * 3, // Stride (size of a single index)
-	//	36                         // Number of indices
-	//);
+	rtcSetSharedGeometryBuffer(
+		geo,
+		RTC_BUFFER_TYPE_INDEX,    // Buffer type (indices)
+		0,                        // Slot
+		RTC_FORMAT_UINT3,         // Data format (3 unsigned ints for indices)
+		indices,                  // Pointer to index data
+		0,                        // Byte offset (0 since it's the first buffer)
+		sizeof(unsigned int) * 3, // Stride (size of a single index)
+		36                         // Number of indices
+	);
 
-	//rtcCommitGeometry(geo);
-	//rtcAttachGeometry(scene, geo);
-	//rtcReleaseGeometry(geo);
-	//rtcCommitScene(scene);
+	rtcCommitGeometry(geo);
+	rtcAttachGeometry(scene, geo);
+	rtcReleaseGeometry(geo);
+	rtcCommitScene(scene);
 	return scene;
 }
 
 int main(int argc, char* argv[]) {
 
-	math::Vector hola{ 1, 2, 3, 4,5,6 };
-
-	cout << hola << endl;
 
 	//INICIALIZACION
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
@@ -338,12 +338,8 @@ int main(int argc, char* argv[]) {
 	printf("Renderer: %s\n", glGetString(GL_RENDERER));
 	printf("Version:  %s\n", glGetString(GL_VERSION));
 
-	init();
-	RTCDevice device = rtcNewDevice(nullptr);
-	RTCScene scene = test_embree_init_scene(device);
-
 	/* Embree window init */
-	SDL_Window* embree_window = SDL_CreateWindow("Ventana de SDL", 700, SDL_WINDOWPOS_UNDEFINED, 600, 600, 0);
+	SDL_Window* embree_window = SDL_CreateWindow("Photon Mapping", 700, SDL_WINDOWPOS_UNDEFINED, 600, 600, 0);
 	SDL_Renderer* embree_renderer = SDL_CreateRenderer(embree_window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_Texture* embree_texture = SDL_CreateTexture(embree_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
 
@@ -355,7 +351,7 @@ int main(int argc, char* argv[]) {
 	photons.push_back(Photon({7.0f, 8.0f, 9.0f}, {0.0f, 0.0f, 1.0f}, {0, 0, 255, 255}));
 	KDTree tree;
 	tree.init(photons);
-	math::Vector query_point = { 7.0, 6.0, 9.0 };
+	math::Vector3 query_point(7.0, 6.0, 9.0);
 	std::vector<SearchResult> res = tree.search(query_point, 5.0f);
 	// Print the nearest neighbor and its distance
 	cout << "Nearest neighbor index: " << res[0].index << endl;
@@ -363,8 +359,14 @@ int main(int argc, char* argv[]) {
 
 	/**/
 
+	auto d = rtcNewDevice(nullptr);
+	//auto scene = test_embree_init_scene(d);
+
 	bool running = true; // set running to true
 	SDL_Event sdlEvent;  // variable to detect SDL events
+
+	auto glbfile = File::load_glb("../cube_cam_light.glb");
+	auto meshes = File::extract_meshes(glbfile,0);
 
 	while (running)		// the event loop
 	{
@@ -379,8 +381,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	cleanup();
-	rtcReleaseScene(scene);
-	rtcReleaseDevice(device);
+	//rtcReleaseScene(scene);
+	//rtcReleaseDevice(device);
 	//FIN LOOP PRINCIPAL
 	SDL_GL_DeleteContext(gl_context);
 	SDL_DestroyWindow(window);

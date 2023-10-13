@@ -1,12 +1,12 @@
-// Allow unsafe functions used by std_image library
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS_GLOBALS
-
-// Define these only in *one* .cc file.
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-// #define TINYGLTF_NOEXCEPTION // optional. disable exception handling.
+//// Allow unsafe functions used by std_image library
+//#define _CRT_SECURE_NO_WARNINGS
+//#define _CRT_SECURE_NO_WARNINGS_GLOBALS
+//
+//// Define these only in *one* .cc file.
+//#define TINYGLTF_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+//// #define TINYGLTF_NOEXCEPTION // optional. disable exception handling.
 
 #include "GLTF_loading_test.h"
 #include "tiny_gltf.h"

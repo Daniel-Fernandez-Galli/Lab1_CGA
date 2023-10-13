@@ -9,66 +9,65 @@
 
 namespace math {
 
-/* Vector */
+	/* Vector */
 
-	/* Generic n-dimensional vector
-	 Must be initialized with brackets
-	 Example: 
-	 Vector myVec{1,2,3};
-	 or
-	 Vector myVec({1,2,3});
-	*/
-	struct Vector {
-		
-		std::vector<float> data;
+	struct Vector2 {
+		float x, y;
 
-		Vector(std::initializer_list<float> values);
+		Vector2();
+
+		Vector2(float x, float y);
+
 	};
 
-	/* Returns the euclidean norm of v */
-	float norm2(const Vector& v);
+	struct Vector3 {
+		float x, y, z;
 
-	bool operator ==(const Vector& v1, const Vector& v2);
+		Vector3();
 
-	bool operator !=(const Vector& v1, const Vector& v2);
-
-	Vector operator +(const Vector& v1, const Vector& v2);
-	
-	Vector operator -(const Vector& v1, const Vector& v2);
-
-	Vector operator -(const Vector& v1);
-
-	Vector operator *(const Vector& v, const float k);
-
-	Vector operator *(const float k, const Vector& v);
-
-	Vector operator /(const Vector& v, const float k);
-
-	Vector operator +=(Vector& v1, const Vector& v2);
-
-	Vector operator -=(Vector& v1, const Vector& v2);
-
-	Vector operator *=(Vector& v, const float k);
-
-	std::ostream& operator <<(std::ostream& out, const Vector& v);
-
-	float dot_product(const Vector& v1, const Vector& v2);
-
-	/* Only supports 3D Vectors */
-	Vector cross_product(const Vector& v1, const Vector& v2);
-
-	struct Vector3 : Vector {
-		float x;
-		float y;
-		float z;
-		Vector3(float x = 0, float y = 0, float z = 0);
+		Vector3(float x, float y, float z);
 	};
 
-	struct Vector2 : Vector {
-		float x;
-		float y;
-		Vector2(float x = 0, float y = 0);
-	};
+	bool operator == (const Vector2& v1, const Vector2& v2);
+
+	bool operator != (const Vector2& v1, const Vector2& v2);
+
+	Vector2 operator + (const Vector2& v1, const Vector2& v2);
+
+	Vector2 operator - (const Vector2& v1, const Vector2& v2);
+
+	Vector2 operator * (const Vector2& v, const float k);
+
+	Vector2 operator * (const float k, const Vector2& v);
+
+	Vector2 operator / (const Vector2& v, const float k);
+
+	std::ostream& operator << (std::ostream& out, const Vector2& v);
+
+	bool operator == (const Vector3& v1, const Vector3& v2);
+
+	bool operator != (const Vector3& v1, const Vector3& v2);
+
+	Vector3 operator + (const Vector3& v1, const Vector3& v2);
+
+	Vector3 operator - (const Vector3& v1, const Vector3& v2);
+
+	Vector3 operator * (const Vector3& v, const float k);
+
+	Vector3 operator * (const float k, const Vector3& v);
+
+	Vector3 operator / (const Vector3& v, const float k);
+
+	std::ostream& operator << (std::ostream& out, const Vector3& v);
+
+	float dotProduct(Vector3 v1, Vector3 v2);
+
+	Vector3 crossProduct(Vector3 v1, Vector3 v2);
+
+	Vector3 normalize(Vector3 v);
+
+	float norm(Vector3 w);
+
 }
 
 /* 32-bit Color */
@@ -100,4 +99,16 @@ struct Hit {
 	} material;
 };
 
+namespace geometry {
+	using namespace math;
+	struct Mesh
+	{
+		std::vector<Vector3> positions;
+		std::vector<Vector3> normals;
+		std::vector<Vector2> texcoords;
+
+		std::vector<unsigned int> indices;
+
+	};
+}
 #endif

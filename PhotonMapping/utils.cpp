@@ -2,122 +2,110 @@
 
 /* Vector */
 
-math::Vector::Vector(std::initializer_list<float> values) : data{ values } { }
+using namespace math;
 
-float math::norm2(const Vector& v) {
-	float ret = 0;
-	for (const float& x : v.data) {
-		ret += x * x;
-	}
-	return std::sqrt(ret);
+Vector2::Vector2() : x(0), y(0) {}
+
+Vector2::Vector2(float x, float y) : x(x), y(y) {}
+
+Vector3::Vector3() : x(0), y(0), z(0) {}
+
+Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+
+bool math::operator == (const Vector2& v1, const Vector2& v2) {
+	return (v1.x == v2.x) && (v1.y == v2.y);
 }
 
-bool math::operator ==(const Vector& v1, const Vector& v2) {
-	return v1.data == v2.data;
+bool math::operator != (const Vector2& v1, const Vector2& v2) {
+	return !(v1 == v2);
 }
 
-bool math::operator !=(const Vector& v1, const Vector& v2) {
-	return v1.data != v2.data;
+Vector2 math::operator + (const Vector2& v1, const Vector2& v2) {
+	return Vector2(v1.x + v2.x, v1.y + v2.y);
 }
 
-math::Vector math::operator +(const Vector& v1, const Vector& v2) {
-	if (v1.data.size() != v2.data.size()) {
-		throw std::domain_error("Exception: Vectors must be same size.");
-	}
-
-	Vector ret = v1;
-	for (int i = 0; i < ret.data.size(); i++) {
-		ret.data[i] += v2.data[i];
-	}
-	return ret;
+Vector2 math::operator - (const Vector2& v1, const Vector2& v2) {
+	return Vector2(v1.x - v2.x, v1.y - v2.y);
 }
 
-math::Vector math::operator -(const Vector& v1, const Vector& v2) {
-	if (v1.data.size() != v2.data.size()) {
-		throw std::domain_error("Exception: Vectors must be same size.");
-	}
-
-	Vector ret = v1;
-	for (int i = 0; i < ret.data.size(); i++) {
-		ret.data[i] -= v2.data[i];
-	}
-	return ret;
+Vector2 math::operator * (const Vector2& v, const float k) {
+	return Vector2(v.x * k, v.y * k);
 }
 
-math::Vector math::operator -(const Vector& v1)
+Vector2 math::operator*(const float k, const Vector2& v)
 {
-	return (-1) * v1;
+	return Vector2(k * v.x, k * v.y);
 }
 
-math::Vector math::operator *(const Vector& v, const float k) {
-	Vector ret = v;
-	for (int i = 0; i < ret.data.size(); i++) {
-		ret.data[i] *= k;
-	}
-	return ret;
+Vector2 math::operator / (const Vector2& v, const float k) {
+	return Vector2(v.x / k, v.y / k);
 }
 
-math::Vector math::operator *(const float k, const Vector& v) {
-	return v * k;
+std::ostream& math::operator << (std::ostream& out, const Vector2& v) {
+	return out << "(" << v.x << ", " << v.y << ")";
 }
 
-math::Vector math::operator /(const Vector& v, const float k) {
-	return v * (1 / k);
+bool math::operator == (const Vector3& v1, const Vector3& v2) {
+	return (v1.x == v2.x) && (v1.y == v2.y) && (v1.z == v2.z);
 }
 
-math::Vector math::operator+=(Vector& v1, const Vector& v2)
+bool math::operator != (const Vector3& v1, const Vector3& v2) {
+	return !(v1 == v2);
+}
+
+Vector3 math::operator + (const Vector3& v1, const Vector3& v2) {
+	return Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+}
+
+Vector3 math::operator - (const Vector3& v1, const Vector3& v2) {
+	return Vector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+}
+
+Vector3 math::operator * (const Vector3& v, const float k) {
+	return Vector3(v.x * k, v.y * k, v.z * k);
+}
+
+Vector3 math::operator*(const float k, const Vector3& v)
 {
-	return v1 = v1 + v2;
+	return Vector3(k * v.x, k * v.y, k * v.z);
 }
 
-math::Vector math::operator-=(Vector& v1, const Vector& v2)
+Vector3 math::operator / (const Vector3& v, const float k) {
+	return Vector3(v.x / k, v.y / k, v.z / k);
+}
+
+float math::dotProduct(Vector3 v1, Vector3 v2) {
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+Vector3 math::crossProduct(Vector3 v1, Vector3 v2)
 {
-	return v1 = v1 - v2;
+	Vector3 result;
+
+	result.x = v1.y * v2.z - v1.z * v2.y;
+	result.y = v1.z * v2.x - v1.x * v2.z;
+	result.z = v1.x * v2.y - v1.y * v2.x;
+
+	result = normalize(result);
+
+	return result;
 }
 
-math::Vector math::operator*=(Vector& v, const float k)
-{
-	return v = v*k;
+Vector3 math::normalize(Vector3 w) {
+	Vector3 v = w;
+	// Calculate the magnitude of the cross product
+	float magnitude = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+
+	// Normalize the cross product
+	v.x /= magnitude;
+	v.y /= magnitude;
+	v.z /= magnitude;
+
+	return v;
 }
 
-std::ostream& math::operator <<(std::ostream& out, const Vector& v) {
-	out << "(";
-	for (int i = 0; i < v.data.size() - 1; i++) {
-		out << v.data[i] << ", ";
-	}
-	out << v.data.back() << ")";
-	return out;
+float math::norm(Vector3 w) {
+	Vector3 v = w;
+	float magnitude = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+	return magnitude;
 }
-
-float math::dot_product(const Vector& v1, const Vector& v2) {
-	if (v1.data.size() != v2.data.size()) {
-		throw std::domain_error("Exception: Vectors must be same size.");
-	}
-
-	float ret = 0;
-	for (int i = 0; i < v1.data.size(); i++) {
-		ret += v1.data[i] * v2.data[i];
-	}
-	return std::sqrt(ret);
-}
-
-math::Vector math::cross_product(const Vector& v1, const Vector& v2) {
-	if (v1.data.size() != 3 ||
-		v2.data.size() != 3) {
-		throw std::domain_error("Exception: Vectors must be three dimensional.");
-	}
-
-	Vector ret{ 0,0,0 };
-
-	ret.data[1] = v1.data[2] * v2.data[3] - v1.data[3] * v2.data[2];
-	ret.data[2] = v1.data[3] * v2.data[1] - v1.data[1] * v2.data[3];
-	ret.data[3] = v1.data[1] * v2.data[2] - v1.data[2] * v2.data[1];
-
-	ret = ret / norm2(ret);
-
-	return ret;
-}
-
-math::Vector3::Vector3(float x, float y, float z) : Vector{x,y,z}, x(x), y(y), z(z){}
-
-math::Vector2::Vector2(float x, float y) : Vector{x,y}, x(x), y(y) {}
