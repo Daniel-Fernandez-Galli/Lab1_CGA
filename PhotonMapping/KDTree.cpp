@@ -1,5 +1,6 @@
 #include "KDTree.h"
-#include "nanoflann.hpp"
+
+#include <nanoflann.hpp>
 
 using namespace nanoflann;
 

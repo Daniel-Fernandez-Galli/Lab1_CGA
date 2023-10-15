@@ -74,11 +74,16 @@ Vector3 math::operator / (const Vector3& v, const float k) {
 	return Vector3(v.x / k, v.y / k, v.z / k);
 }
 
-float math::dotProduct(Vector3 v1, Vector3 v2) {
+std::ostream& math::operator<<(std::ostream& out, const Vector3& v)
+{
+	return out << "(" << v.x << ", " << v.y << v.z << ")";
+}
+
+float math::dot_product(const Vector3 &v1, const Vector3 &v2) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-Vector3 math::crossProduct(Vector3 v1, Vector3 v2)
+Vector3 math::cross_product(const Vector3 &v1, const Vector3 &v2)
 {
 	Vector3 result;
 
@@ -91,21 +96,39 @@ Vector3 math::crossProduct(Vector3 v1, Vector3 v2)
 	return result;
 }
 
-Vector3 math::normalize(Vector3 w) {
-	Vector3 v = w;
-	// Calculate the magnitude of the cross product
-	float magnitude = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-
-	// Normalize the cross product
-	v.x /= magnitude;
-	v.y /= magnitude;
-	v.z /= magnitude;
-
-	return v;
+Vector3 math::normalize(const Vector3 &v) {
+	Vector3 n = v;
+	float magnitude = norm2(v);
+	n.x /= magnitude;
+	n.y /= magnitude;
+	n.z /= magnitude;
+	return n;
 }
 
-float math::norm(Vector3 w) {
-	Vector3 v = w;
-	float magnitude = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+float math::norm2(const Vector3 &v) {
+	Vector3 n = v;
+	float magnitude = std::sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
 	return magnitude;
+}
+
+Vector3 math::project(const Vector3& view, const Vector3& absolute_vector)
+{
+	Vector3 relative_vector = normalize(view);
+	float dot = dot_product(absolute_vector, relative_vector);
+	relative_vector = dot * relative_vector;
+	return relative_vector;
+}
+
+Matrix<4, 4> math::quaternion_to_rotation_matrix(const Matrix<4, 1>& quaternion)
+{
+	float x = quaternion[0][0];
+	float y = quaternion[1][0];
+	float z = quaternion[2][0];
+	float w = quaternion[3][0];
+	return {
+		std::array<float,4>	{	1 - 2 * (y * y - z * z),			  2 * (x * y - z * w),			  2 * (x * z + y * w),			0	},
+		std::array<float,4>	{	  2 * (x * y + w * z),			1 - 2 * (x * x - z * z),			  2 * (y * z - w * x),			0	},
+		std::array<float,4>	{	  2 * (x * z - w * y),			  2 * (y * z + w * x),			1 - 2 * (x * x - y * y),			0	},
+		std::array<float,4>	{		0,								0,							0,					1	}
+	};
 }

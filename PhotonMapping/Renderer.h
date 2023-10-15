@@ -2,34 +2,48 @@
 #define RENDERER_H
 
 #include "utils.h"
-#include "tiny_gltf.h"
-#include "embree4/rtcore.h"
+#include "Camera.h"
 
+#include <embree4/rtcore.h>
 #include <SDL.h>
+#include <shared_mutex>
+
+using mutex_type = std::shared_mutex;
 
 class Renderer
 {
 private:
 
-	tinygltf::Model m_model;
+	RTCDevice device;
 
-	RTCDevice m_device;
+	RTCScene scene;
 
-	RTCScene m_scene;
+	Camera camera;
 
+	//mutable mutex_type mtx;
+	//using camera_lock = std::shared_lock<mutex_type>;
+	//using draw_lock = std::unique_lock<mutex_type>;
+
+	uint32_t* pixels;
 
 public:
 
-	Renderer();
+	Renderer(SDL_Window* window);
 
 	Renderer(const Renderer&) = delete;
 	Renderer& operator=(const Renderer&) = delete;
 
-	void load_scene(const geometry::Mesh &mesh);
+	void attach_mesh(const geometry::Mesh &mesh);
 
-	Hit cast_ray(Ray ray);
+	void commit_scene();
 
 	void trace(SDL_Renderer* renderer, SDL_Texture* texture);
+
+	void move_camera(Direction dir);
+
+	void transform_camera(math::Matrix<4, 4> transform, bool local_origin = false, bool local_axis = false);
+
+	~Renderer();
 
 };
 

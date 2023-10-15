@@ -6,8 +6,15 @@
 #include <cmath>
 #include <stdexcept>
 #include <ostream>
+#include <array>
+
+enum class Direction {
+	FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN
+};
 
 namespace math {
+
+	constexpr float pi = 3.14159267f;
 
 	/* Vector */
 
@@ -60,13 +67,64 @@ namespace math {
 
 	std::ostream& operator << (std::ostream& out, const Vector3& v);
 
-	float dotProduct(Vector3 v1, Vector3 v2);
+	float dot_product(const Vector3& v1, const Vector3& v2);
 
-	Vector3 crossProduct(Vector3 v1, Vector3 v2);
+	Vector3 cross_product(const Vector3& v1, const Vector3& v2);
 
-	Vector3 normalize(Vector3 v);
+	Vector3 normalize(const Vector3& v);
 
-	float norm(Vector3 w);
+	float norm2(const Vector3& v);
+
+	Vector3 project(const Vector3& view, const Vector3& absolute_vector);
+
+	/* MATRIX */
+	template <size_t rows, size_t columns>
+	using Matrix = std::array<std::array<float, columns>, rows>;
+
+	template <size_t n>
+	Matrix<n, n> identity();
+
+	template <size_t n, size_t m>
+	Matrix<n, m> operator + (const Matrix<n, m>& matrix_1, const Matrix<n, m>& matrix_2);
+
+	template <size_t n, size_t m>
+	Matrix<n, m> operator - (const Matrix<n, m>& matrix_1, const Matrix<n, m>& matrix_2);
+
+	template <size_t n, size_t m>
+	Matrix<n, m> operator - (const Matrix<n, m>& matrix);
+
+	template <size_t n, size_t m>
+	Matrix<n, m> operator * (const Matrix<n, m>& matrix, const float k);
+
+	template <size_t n, size_t m>
+	Matrix<n, m> operator * (const float k, const Matrix<n, m>& matrix);
+
+	template <size_t l, size_t n, size_t m>
+	Matrix<l, n> operator * (const Matrix<l, m>& matrix_1, const Matrix<m, n>& matrix_2);
+
+	template <size_t n, size_t m>
+	Matrix<n, m> operator / (const Matrix<n, m>& matrix, const float k);
+
+	template <size_t n, size_t m>
+	std::ostream& operator << (std::ostream& out, const Matrix<n, m>& matrix);
+
+	/* Quaternions must be defined in xyzw format */
+	Matrix<4, 4> quaternion_to_rotation_matrix(const Matrix<4, 1>& quaternion);
+
+	template <size_t n, size_t m>
+	void swap_rows(Matrix<n, m>& matrix, int i, int j);
+
+	template <size_t n, size_t m>
+	void scale_row(Matrix<n, m>& matrix, int i, double scalar);
+
+	template <size_t n, size_t m>
+	void add_rows(Matrix<n, m>& matrix, int i, int j, double scalar);
+
+	template <size_t n>
+	bool invert_matrix(Matrix<n, n>& matrix);
+
+	/* END MATRIX */
+
 
 }
 
@@ -89,14 +147,16 @@ struct Ray {
 	math::Vector3 direction;
 };
 
+struct Material {
+	float metallic;
+	float roughness;
+	bool double_sided;
+};
+
 struct Hit {
 	math::Vector3 normal;
 	math::Vector2 uv;
-	struct Material {
-		float metallic;
-		float roughness;
-		bool double_sided;
-	} material;
+	Material material{};
 };
 
 namespace geometry {
@@ -110,5 +170,13 @@ namespace geometry {
 		std::vector<unsigned int> indices;
 
 	};
+
 }
+
+/* Template definitions */
+#ifndef MATRIX_TPP
+#define MATRIX_TPP
+#include "Matrix.tpp"
+#endif
+
 #endif

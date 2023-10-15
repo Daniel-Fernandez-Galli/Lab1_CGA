@@ -55,6 +55,9 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\libraries\glad;..\libraries\glm;..\libraries\JSON;..\libraries\stb_image;..\libraries\TinyGLTF;..\libraries\Embree\include;..\libraries\nanoflann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <TreatAngleIncludeAsExternal>true</TreatAngleIncludeAsExternal>
+      <DisableAnalyzeExternal>true</DisableAnalyzeExternal>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -72,6 +75,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\libraries\glad;..\libraries\glm;..\libraries\JSON;..\libraries\stb_image;..\libraries\TinyGLTF;..\libraries\Embree\include;..\libraries\nanoflann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -90,19 +94,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\libraries\glad\glad\glad.c" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MeshObject.cpp" />
     <ClCompile Include="Photon.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="KDTree.h" />
+    <ClInclude Include="MeshObject.h" />
     <ClInclude Include="Photon.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Matrix.tpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -7,19 +7,20 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 // #define TINYGLTF_NOEXCEPTION // optional. disable exception handling.
+#include <tiny_gltf.h>
 
 #include "File.h"
-#include "tiny_gltf.h"
+#include "MeshObject.h"
 
 using namespace File;
-using namespace tinygltf;
+using namespace math;
 
 /* Auxiliary method */
 template <typename T>
 std::vector<T> extract_from_accessor(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
 
-	auto buffer_view = model.bufferViews[accessor.bufferView];
-	auto buffer = model.buffers[buffer_view.buffer];
+	auto &buffer_view = model.bufferViews[accessor.bufferView];
+	auto &buffer = model.buffers[buffer_view.buffer];
 
 	const T* buffer_data = reinterpret_cast<const T*>(&buffer.data[buffer_view.byteOffset + accessor.byteOffset]);
 
@@ -33,8 +34,8 @@ struct File::GLTF_t {
 
 GLTF_t* File::load_glb(std::string path)
 {
-	Model m_model;
-	TinyGLTF loader;
+	tinygltf::Model m_model;
+	tinygltf::TinyGLTF loader;
 	std::string err;
 	std::string warn;
 
@@ -56,21 +57,53 @@ GLTF_t* File::load_glb(std::string path)
 	return new GLTF_t{ m_model };
 }
 
-std::vector<geometry::Mesh> File::extract_meshes(GLTF_t* file, unsigned int scene_index)
+std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_index)
 {
-	std::vector<geometry::Mesh> meshes;
+	std::vector<MeshObject> objects;
 
-	auto scene = file->model.scenes[scene_index];
+	auto &scene = file->model.scenes[scene_index];
 
 	for (int node_index : scene.nodes) {
-		auto node = file->model.nodes[node_index];
+
+		auto &node = file->model.nodes[node_index];
 
 		if (node.mesh >= 0) {
-			auto mesh = file->model.meshes[node.mesh];
 
-			geometry::Mesh new_mesh;
+			math::Matrix<4, 4> transform = math::identity<4>();
+
+			if (node.scale.size() == 3) {
+				transform[0][0] = static_cast<float>(node.scale[0]);
+				transform[1][1] = static_cast<float>(node.scale[1]);
+				transform[2][2] = static_cast<float>(node.scale[2]);
+			}
+
+			if (node.rotation.size() == 4) {
+				Matrix<4, 1> quaternion{};
+				quaternion[0][0] = static_cast<float>(node.rotation[0]);
+				quaternion[1][0] = static_cast<float>(node.rotation[1]);
+				quaternion[2][0] = static_cast<float>(node.rotation[2]);
+				quaternion[3][0] = static_cast<float>(node.rotation[3]);
+				
+				auto R = math::quaternion_to_rotation_matrix(quaternion);
+
+				transform = R * transform;
+			}
+
+			if (node.translation.size() == 3) {
+				Matrix<4, 4> T = identity<4>();
+				T[0][3] = static_cast<float>(node.translation[0]);
+				T[1][3] = static_cast<float>(node.translation[1]);
+				T[2][3] = static_cast<float>(node.translation[2]);
+				transform = T * transform;
+			}
+
+			MeshObject mesh_object(transform);
+
+			auto &mesh = file->model.meshes[node.mesh];
 
 			for (auto& primitive : mesh.primitives) {
+
+				geometry::Mesh new_mesh;
 
 				const int positions_index = primitive.attributes["POSITION"];
 				if (positions_index >= 0) {
@@ -101,12 +134,12 @@ std::vector<geometry::Mesh> File::extract_meshes(GLTF_t* file, unsigned int scen
 						new_mesh.indices = extract_from_accessor<unsigned int>(file->model, indices_accessor);
 					}
 				}
-
+				mesh_object.add_mesh(new_mesh);
 			}
 
-			meshes.push_back(new_mesh);
+			objects.push_back(mesh_object);
 		}
 	}
 
-	return meshes;
+	return objects;
 }
