@@ -34,6 +34,8 @@ public:
 
 	void trace(SDL_Renderer* renderer, SDL_Texture* texture);
 
+	raytracing::Hit cast_ray(const raytracing::Ray& ray);
+
 	void move_camera(Direction dir);
 
 	void transform_camera(math::Matrix<4, 4> transform, bool local_origin = false, bool local_axis = false);

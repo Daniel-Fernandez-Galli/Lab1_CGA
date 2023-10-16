@@ -48,21 +48,21 @@ void Renderer::trace(SDL_Renderer* renderer, SDL_Texture* texture)
 					scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
 					rayhit.hit.u,
 					rayhit.hit.v
-					);
+				);
 
 				Ng = normalize(Ng);
 
 				Vector3 ambient_light = { 1.0, 1.0, 1.0 };
 				constexpr float k_ambient = 0.05f;
-				Vector3 light_dir = { 1.0f, 1.0f, 3.0f};
+				Vector3 light_dir = { 1.0f, 1.0f, 3.0f };
 				light_dir = normalize(light_dir);
 
-				float lambertian = dot_product(Ng,light_dir);
+				float lambertian = dot_product(Ng, light_dir);
 				constexpr float k_diffuse = 1.0f;
 
 				float light_intensity = k_diffuse * lambertian;
-				
-				if (light_intensity < 0.0f){
+
+				if (light_intensity < 0.0f) {
 					light_intensity = 0.0f;
 				}
 
@@ -87,6 +87,44 @@ void Renderer::trace(SDL_Renderer* renderer, SDL_Texture* texture)
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
 	SDL_RenderPresent(renderer);
 
+}
+
+raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
+{
+	struct RTCRayHit rayhit {};
+	rayhit.ray.org_x = ray.orig.x;
+	rayhit.ray.org_y = ray.orig.y;
+	rayhit.ray.org_z = ray.orig.z;
+	rayhit.ray.dir_x = ray.dir.x;
+	rayhit.ray.dir_y = ray.dir.y;
+	rayhit.ray.dir_z = ray.dir.z;
+	rayhit.ray.tnear = 0.01f;
+	rayhit.ray.tfar = 1000.0f;
+	rayhit.ray.mask = -1;
+	rayhit.ray.flags = 0;
+	rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+	rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+	scene.ray_intersect(rayhit);
+
+	Vector3 intersection;
+	intersection.x = ray.orig.x + rayhit.ray.tfar * ray.dir.x;
+	intersection.y = ray.orig.y + rayhit.ray.tfar * ray.dir.y;
+	intersection.z = ray.orig.z + rayhit.ray.tfar * ray.dir.z;
+
+	Vector3 normal = normal_interpolation(
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
+		rayhit.hit.u,
+		rayhit.hit.v
+	);
+
+	normal = normalize(normal);
+
+	Material mat = scene.get_material(rayhit.hit.geomID);
+
+	return {intersection, normal, mat};
 }
 
 void Renderer::move_camera(Direction dir)

@@ -5,8 +5,9 @@ Photon PhotonMapper::emitPhoton(Photon photon){
 	return Photon({ 1.0f, 2.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 });
 }
 
-std::vector<Photon> PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector<Light*> lights) {
+KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector<Light*> lights) {
 	vector<Photon> photonMap;
+	KDTree tree;
 	float potenciaTotal = 0;
 	for (Light* light : lights) {
 		potenciaTotal += light->potencia;
@@ -20,5 +21,6 @@ std::vector<Photon> PhotonMapper::createGlobalIluminationMap(int numberOfPhotons
 			photonMap.push_back(photon);
 		}
 	}
-	return photonMap;
+	tree.init(photonMap);
+	return tree;
 }

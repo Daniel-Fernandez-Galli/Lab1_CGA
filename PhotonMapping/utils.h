@@ -180,6 +180,28 @@ namespace geometry {
 
 }
 
+namespace raytracing {
+
+	struct Ray {
+
+		math::Vector3 orig;
+
+		math::Vector3 dir;
+
+	};
+
+	struct Hit {
+
+		math::Vector3 intersection;
+
+		math::Vector3 normal;
+
+		Material material;
+
+	};
+
+}
+
 /* Template definitions */
 #ifndef MATRIX_TPP
 #define MATRIX_TPP
