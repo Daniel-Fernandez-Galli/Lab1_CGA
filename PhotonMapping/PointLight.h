@@ -5,7 +5,9 @@
 
 class PointLight : public Light {
 public:
-    void emitPhoton(float& x, float& y, float& z) override;
+    Vector3 center;
+    PointLight(Vector3 center);
+    Photon createPhoton() override;
 };
 
 #endif // POINTLIGHT_H

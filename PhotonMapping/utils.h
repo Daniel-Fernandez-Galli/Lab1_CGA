@@ -68,6 +68,16 @@ namespace math {
 
 	float norm(Vector3 w);
 
+	float getRandomP();
+
+	float getRandomFloat(float lowerBound, float upperBound);
+
+	Vector3 chooseARandomPointFromASphere();
+
+	Vector3 chooseARandomPointFromAHemisphere(Vector3 norm);
+
+	Vector3 chooseAPoinCosineDistribution(Vector3 norm);
+
 }
 
 /* 32-bit Color */

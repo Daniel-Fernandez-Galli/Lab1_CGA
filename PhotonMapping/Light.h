@@ -1,9 +1,13 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
+#include "Photon.h"
+
 class Light {
 public:
-    virtual void emitPhoton(float& x, float& y, float& z) = 0;  // Pure virtual function
+    float potencia; // En Watts
+    Color color;
+    virtual Photon createPhoton() = 0;  // Pure virtual function
 };
 
 #endif // LIGHT_H

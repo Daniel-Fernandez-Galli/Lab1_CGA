@@ -5,7 +5,16 @@
 
 class PaneLight : public Light {
 public:
-    void emitPhoton(float& x, float& y, float& z) override;
+    Vector3 center; //center of the pane
+    Vector3 norm;//cross product between up and right
+    Vector3 up;//v1 of the plane
+    Vector3 right;//v2 of the plane
+
+    float width;
+    float height;
+
+    PaneLight(Vector3 center, float width, float height, Vector3 up, Vector3 right);
+    Photon createPhoton() override;
 };
 
 #endif // PANELIGHT_H

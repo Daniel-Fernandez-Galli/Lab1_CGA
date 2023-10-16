@@ -1,4 +1,6 @@
 #include "utils.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 /* Vector */
 
@@ -108,4 +110,62 @@ float math::norm(Vector3 w) {
 	Vector3 v = w;
 	float magnitude = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 	return magnitude;
+}
+
+float math::getRandomP() {
+	return ((double)rand() / (RAND_MAX));
+}
+
+float math::getRandomFloat(float lowerBound, float upperBound) {
+	return getRandomP() * (upperBound - lowerBound) + lowerBound;
+}
+
+Vector3 math::chooseARandomPointFromASphere() {
+	float x = 1;
+	float y = 1;
+	float z = 1;
+	while (x * x + y * y + z * z > 1) {
+		x = getRandomP();
+		y = getRandomP();
+		z = getRandomP();
+	}
+
+	return Vector3(x, y , z);
+}
+
+Vector3 math::chooseARandomPointFromAHemisphere(Vector3 norm) {
+	float x = 1;
+	float y = 1;
+	float z = 1;
+	while (x * x + y * y + z * z > 1 || dotProduct(norm, Vector3(x, y, z)) < 0.f) {
+		x = getRandomP();
+		y = getRandomP();
+		z = getRandomP();
+	}
+
+	return Vector3(x, y, z);
+}
+
+/*Vector3 math::chooseAPoinCosineDistribution(Vector3 center, Vector3 norm) {
+	return Vector3(0, 0, 0);
+}*/
+
+Vector3 math::chooseAPoinCosineDistribution(Vector3 norm) {
+	norm = normalize(norm);
+	float theta = std::atan2(std::sqrt(1 - std::pow(std::cos(static_cast<float>(rand()) / RAND_MAX * M_PI / 2), 2)),
+		std::cos(static_cast<float>(rand()) / RAND_MAX * M_PI / 2));
+	float phi = static_cast<float>(rand()) / RAND_MAX * 2 * M_PI;
+
+	Vector3 point;
+	point.x = std::sin(theta) * std::cos(phi);
+	point.y = std::sin(theta) * std::sin(phi);
+	point.z = std::cos(theta);
+
+	// Align the point with the normal
+	Vector3 alignedPoint;
+	alignedPoint.x = point.x * norm.x;
+	alignedPoint.y = point.y * norm.y;
+	alignedPoint.z = point.z * norm.z;
+
+	return alignedPoint;
 }
