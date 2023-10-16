@@ -52,7 +52,8 @@ void Renderer::trace(SDL_Renderer* renderer, SDL_Texture* texture)
 
 				Ng = normalize(Ng);
 
-				Vector3 ambient_light = { 0.1f, 0.1f, 0.1f };
+				Vector3 ambient_light = { 1.0, 1.0, 1.0 };
+				constexpr float k_ambient = 0.05f;
 				Vector3 light_dir = { 1.0f, 1.0f, 3.0f};
 				light_dir = normalize(light_dir);
 
@@ -66,7 +67,7 @@ void Renderer::trace(SDL_Renderer* renderer, SDL_Texture* texture)
 				}
 
 				auto mat = scene.get_material(rayhit.hit.geomID);
-				mat.basecolor = ambient_light + mat.basecolor * light_intensity;
+				mat.basecolor = k_ambient * ambient_light + mat.basecolor * light_intensity;
 				mat.basecolor = linear_RGB_to_sRGB(mat.basecolor);
 				uint32_t r = mat.basecolor.x * 255;
 				uint32_t g = mat.basecolor.y * 255;
