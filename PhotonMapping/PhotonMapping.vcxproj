@@ -99,7 +99,10 @@
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshObject.cpp" />
+    <ClCompile Include="PaneLight.cpp" />
     <ClCompile Include="Photon.cpp" />
+    <ClCompile Include="PhotonMapper.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="utils.cpp" />
@@ -109,7 +112,11 @@
     <ClInclude Include="File.h" />
     <ClInclude Include="KDTree.h" />
     <ClInclude Include="MeshObject.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="PaneLight.h" />
     <ClInclude Include="Photon.h" />
+    <ClInclude Include="PhotonMapper.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="utils.h" />

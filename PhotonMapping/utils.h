@@ -78,6 +78,16 @@ namespace math {
 	/* Given vertex shading normals n1, n2, n3, returns shading normal at triangle barycentric coordinates u,v  */
 	Vector3 normal_interpolation(const Vector3& n1, const Vector3& n2, const Vector3& n3, float u, float v);
 
+	float getRandomP();
+
+	float getRandomFloat(float lowerBound, float upperBound);
+
+	Vector3 chooseARandomPointFromASphere();
+
+	Vector3 chooseARandomPointFromAHemisphere(Vector3 norm);
+
+	Vector3 chooseAPoinCosineDistribution(Vector3 norm);
+
 	/* MATRIX */
 	template <size_t rows, size_t columns>
 	using Matrix = std::array<std::array<float, columns>, rows>;
