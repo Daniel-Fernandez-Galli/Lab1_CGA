@@ -6,14 +6,13 @@ MeshObject::MeshObject(math::Matrix<4, 4> transform) : transform(transform) {}
 
 void MeshObject::add_mesh(geometry::Mesh &mesh)
 {
-	meshes.push_back(std::make_shared<geometry::Mesh>(mesh));
+	meshes.push_back(std::shared_ptr<geometry::Mesh>(&mesh));
 }
 
-void MeshObject::commit_object(Renderer& renderer)
+void MeshObject::commit_object()
 {
-	for (auto mesh : meshes) {
-		geometry::Mesh& transformed_mesh = *mesh;
-		for (auto& v : transformed_mesh.positions) {
+	for (auto &mesh : meshes) {
+		for (auto& v : mesh->positions) {
 			Matrix<4, 1> homogeneous_pos;
 			homogeneous_pos[0][0] = v.x;
 			homogeneous_pos[1][0] = v.y;
@@ -26,7 +25,7 @@ void MeshObject::commit_object(Renderer& renderer)
 			v.y = homogeneous_pos[1][0];
 			v.z = homogeneous_pos[2][0];
 		}
-		for (auto& n : transformed_mesh.normals) {
+		for (auto& n : mesh->normals) {
 			Matrix<4, 1> homogeneous_norm;
 			homogeneous_norm[0][0] = n.x;
 			homogeneous_norm[1][0] = n.y;
@@ -40,12 +39,16 @@ void MeshObject::commit_object(Renderer& renderer)
 
 			homogeneous_norm = rotation * homogeneous_norm;
 
-			n.x = 0.0f;// homogeneous_norm[0][0];
-			n.y = 1.0f;// homogeneous_norm[1][0];
-			n.z = 0.0f;// homogeneous_norm[2][0];
+			n.x = homogeneous_norm[0][0];
+			n.y = homogeneous_norm[1][0];
+			n.z = homogeneous_norm[2][0];
 
-			//n = normalize(n);
+			n = normalize(n);
 		}
-		renderer.attach_mesh(transformed_mesh);
+
 	}
+}
+
+std::vector<std::shared_ptr<geometry::Mesh>> MeshObject::get_meshes() {
+	return meshes;
 }

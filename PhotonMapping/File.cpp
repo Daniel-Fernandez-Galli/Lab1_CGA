@@ -61,9 +61,9 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 {
 	std::vector<MeshObject> objects;
 
-	auto &scene = file->model.scenes[scene_index];
+	auto &rtcscene = file->model.scenes[scene_index];
 
-	for (int node_index : scene.nodes) {
+	for (int node_index : rtcscene.nodes) {
 
 		auto &node = file->model.nodes[node_index];
 
@@ -103,7 +103,8 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 
 			for (auto& primitive : mesh.primitives) {
 
-				geometry::Mesh new_mesh;
+				auto mesh_ptr = new geometry::Mesh();
+				geometry::Mesh &new_mesh = *mesh_ptr;
 
 				const int positions_index = primitive.attributes["POSITION"];
 				if (positions_index >= 0) {
@@ -136,7 +137,7 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 				}
 				mesh_object.add_mesh(new_mesh);
 			}
-
+			mesh_object.commit_object();
 			objects.push_back(mesh_object);
 		}
 	}

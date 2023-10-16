@@ -3,26 +3,19 @@
 
 #include "utils.h"
 #include "Camera.h"
+#include "Scene.h"
+#include "MeshObject.h"
 
 #include <embree4/rtcore.h>
-#include <SDL.h>
-#include <shared_mutex>
-
-using mutex_type = std::shared_mutex;
+#include <map>
 
 class Renderer
 {
 private:
 
-	RTCDevice device;
-
-	RTCScene scene;
-
 	Camera camera;
 
-	//mutable mutex_type mtx;
-	//using camera_lock = std::shared_lock<mutex_type>;
-	//using draw_lock = std::unique_lock<mutex_type>;
+	Scene scene;
 
 	uint32_t* pixels;
 
@@ -33,7 +26,7 @@ public:
 	Renderer(const Renderer&) = delete;
 	Renderer& operator=(const Renderer&) = delete;
 
-	void attach_mesh(const geometry::Mesh &mesh);
+	void attach_mesh(std::shared_ptr<geometry::Mesh> mesh_ptr);
 
 	void commit_scene();
 

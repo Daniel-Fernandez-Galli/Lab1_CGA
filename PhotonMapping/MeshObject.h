@@ -2,7 +2,15 @@
 #define MESHOBJECT_H
 
 #include "utils.h"
-#include "Renderer.h"
+
+enum class BufferType {
+	POSITION_BUFFER, NORMAL_BUFFER, TEXCOORD_BUFFER, INDEX_BUFFER
+};
+
+struct Buffer {
+	const void* data;
+	unsigned int count;
+};
 
 class MeshObject
 {
@@ -20,7 +28,9 @@ public:
 
 	void add_mesh(geometry::Mesh &mesh);
 
-	void commit_object(Renderer &renderer);
+	void commit_object();
+
+	std::vector<std::shared_ptr<geometry::Mesh>> get_meshes();
 
 };
 

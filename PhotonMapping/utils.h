@@ -75,7 +75,8 @@ namespace math {
 
 	float norm2(const Vector3& v);
 
-	Vector3 project(const Vector3& view, const Vector3& absolute_vector);
+	/* Given vertex shading normals n1, n2, n3, returns shading normal at triangle barycentric coordinates u,v  */
+	Vector3 normal_interpolation(const Vector3& n1, const Vector3& n2, const Vector3& n3, float u, float v);
 
 	/* MATRIX */
 	template <size_t rows, size_t columns>
@@ -168,6 +169,10 @@ namespace geometry {
 		std::vector<Vector2> texcoords;
 
 		std::vector<unsigned int> indices;
+
+		Mesh() = default;
+		Mesh(const Mesh&) = delete;
+		Mesh operator=(const Mesh&) = delete;
 
 	};
 

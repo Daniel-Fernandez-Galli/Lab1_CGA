@@ -111,12 +111,9 @@ float math::norm2(const Vector3 &v) {
 	return magnitude;
 }
 
-Vector3 math::project(const Vector3& view, const Vector3& absolute_vector)
+Vector3 math::normal_interpolation(const Vector3& n1, const Vector3& n2, const Vector3& n3, float u, float v)
 {
-	Vector3 relative_vector = normalize(view);
-	float dot = dot_product(absolute_vector, relative_vector);
-	relative_vector = dot * relative_vector;
-	return relative_vector;
+	return (1.0f - u - v) * n1 + u * n2 + v * n3;
 }
 
 Matrix<4, 4> math::quaternion_to_rotation_matrix(const Matrix<4, 1>& quaternion)

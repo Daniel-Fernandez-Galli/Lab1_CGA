@@ -65,12 +65,16 @@ int main(int argc, char* argv[]) {
 	float rotation_y = 0.0f;
 
 	auto glbfile = File::load_glb("../multimesh.glb");
-	auto meshes = File::extract_meshes(glbfile, 0);
+	auto objects = File::extract_meshes(glbfile, 0);
 
 	Renderer renderer(sdlwindow);
-	for (auto &mesh : meshes){
-		mesh.commit_object(renderer);
+	for (auto& object : objects) {
+		auto meshes = object.get_meshes();
+		for (auto& mesh : meshes) {
+			renderer.attach_mesh(mesh);
+		}
 	}
+
 	renderer.commit_scene();
 
 	//std::thread trace_tread(trace, std::ref(renderer), sdlrenderer, sdltex, std::ref(running));
