@@ -129,3 +129,19 @@ Matrix<4, 4> math::quaternion_to_rotation_matrix(const Matrix<4, 1>& quaternion)
 		std::array<float,4>	{		0,								0,							0,					1	}
 	};
 }
+
+float math::linear_to_sRGB(float value) {
+	if (value <= 0.0031308)
+		return 12.92 * value;
+	else
+		return 1.055 * std::pow(value, 1.0 / 2.2) - 0.055;
+}
+
+
+Vector3 math::linear_RGB_to_sRGB(const Vector3 &color) {
+	Vector3 ret;
+	ret.x = linear_to_sRGB(color.x);
+	ret.y = linear_to_sRGB(color.y);
+	ret.z = linear_to_sRGB(color.z);
+	return ret;
+}

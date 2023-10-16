@@ -126,7 +126,9 @@ namespace math {
 
 	/* END MATRIX */
 
+	float linear_to_sRGB(float value);
 
+	Vector3 linear_RGB_to_sRGB(const Vector3& color);
 }
 
 /* 32-bit Color */
@@ -143,21 +145,11 @@ struct Color {
 
 };
 
-struct Ray {
-	math::Vector3 origin;
-	math::Vector3 direction;
-};
-
 struct Material {
-	float metallic;
-	float roughness;
-	bool double_sided;
-};
-
-struct Hit {
-	math::Vector3 normal;
-	math::Vector2 uv;
-	Material material{};
+	math::Vector3 basecolor = {0.8f, 0.8f, 0.8f};
+	float metallic = 0.0f;
+	float roughness = 0.4f;
+	//bool double_sided;
 };
 
 namespace geometry {

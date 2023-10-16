@@ -44,6 +44,13 @@ void Scene::attach_mesh(std::shared_ptr<geometry::Mesh> mesh_ptr)
 
 	meshes[id] = mesh_ptr;
 
+	last_id = id;
+
+}
+
+void Scene::attach_material(Material material)
+{
+	materials[last_id] = material;
 }
 
 void Scene::commit_scene()
@@ -70,4 +77,9 @@ std::array<math::Vector3, 3> Scene::get_shading_normals(unsigned int geom_id, un
 	Ns3 = mesh.normals[index_3];
 
 	return { Ns1, Ns2, Ns3 };
+}
+
+Material Scene::get_material(unsigned int geom_id)
+{
+	return materials[geom_id];
 }

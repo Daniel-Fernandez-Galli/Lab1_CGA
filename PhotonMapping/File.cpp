@@ -135,7 +135,22 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 						new_mesh.indices = extract_from_accessor<unsigned int>(file->model, indices_accessor);
 					}
 				}
+
+				const int material_index = primitive.material;
+				Material new_material;
+				if (material_index >= 0) {
+					tinygltf::Material mat = file->model.materials[material_index];
+					new_material.basecolor.x = mat.pbrMetallicRoughness.baseColorFactor[0];
+					new_material.basecolor.y = mat.pbrMetallicRoughness.baseColorFactor[1];
+					new_material.basecolor.z = mat.pbrMetallicRoughness.baseColorFactor[2];
+
+					new_material.metallic = mat.pbrMetallicRoughness.metallicFactor;
+					new_material.roughness = mat.pbrMetallicRoughness.roughnessFactor;
+
+				}
+
 				mesh_object.add_mesh(new_mesh);
+				mesh_object.add_material(new_material);
 			}
 			mesh_object.commit_object();
 			objects.push_back(mesh_object);

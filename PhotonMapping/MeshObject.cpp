@@ -9,6 +9,11 @@ void MeshObject::add_mesh(geometry::Mesh &mesh)
 	meshes.push_back(std::shared_ptr<geometry::Mesh>(&mesh));
 }
 
+void MeshObject::add_material(Material material)
+{
+	materials.push_back(material);
+}
+
 void MeshObject::commit_object()
 {
 	for (auto &mesh : meshes) {
@@ -51,4 +56,9 @@ void MeshObject::commit_object()
 
 std::vector<std::shared_ptr<geometry::Mesh>> MeshObject::get_meshes() {
 	return meshes;
+}
+
+std::vector<Material> MeshObject::get_materials()
+{
+	return materials;
 }

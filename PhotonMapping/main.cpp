@@ -70,8 +70,12 @@ int main(int argc, char* argv[]) {
 	Renderer renderer(sdlwindow);
 	for (auto& object : objects) {
 		auto meshes = object.get_meshes();
+		auto materials = object.get_materials();
 		for (auto& mesh : meshes) {
 			renderer.attach_mesh(mesh);
+		}
+		for (auto& material : materials) {
+			renderer.attach_material(material);
 		}
 	}
 

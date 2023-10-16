@@ -20,7 +20,7 @@ private:
 
 	std::vector<std::shared_ptr<geometry::Mesh>> meshes;
 
-	//std::vector<Material> materials; NOT IMPLEMENTED
+	std::vector<Material> materials;
 
 public:
 
@@ -28,9 +28,13 @@ public:
 
 	void add_mesh(geometry::Mesh &mesh);
 
+	void add_material(Material material);
+
 	void commit_object();
 
 	std::vector<std::shared_ptr<geometry::Mesh>> get_meshes();
+
+	std::vector<Material> get_materials();
 
 };
 

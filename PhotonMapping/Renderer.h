@@ -28,6 +28,8 @@ public:
 
 	void attach_mesh(std::shared_ptr<geometry::Mesh> mesh_ptr);
 
+	void attach_material(Material material);
+
 	void commit_scene();
 
 	void trace(SDL_Renderer* renderer, SDL_Texture* texture);
