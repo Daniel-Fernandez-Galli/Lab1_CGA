@@ -7,6 +7,7 @@ class Light {
 public:
     float potencia; // En Watts
     Color color;
+    Light(float potencia, Color color);
     virtual Photon createPhoton() = 0;  // Pure virtual function
 };
 

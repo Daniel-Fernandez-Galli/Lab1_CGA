@@ -13,7 +13,7 @@ public:
     float width;
     float height;
 
-    PaneLight(Vector3 center, float width, float height, Vector3 up, Vector3 right);
+    PaneLight(float potencia, Color color, Vector3 center, float width, float height, Vector3 up, Vector3 right);
     Photon createPhoton() override;
 };
 

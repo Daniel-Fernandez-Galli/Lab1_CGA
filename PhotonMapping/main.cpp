@@ -17,8 +17,9 @@
 #include "KDTree.h"
 #include "Renderer.h"
 #include "File.h"
-
-#include <thread>
+#include "PhotonMapper.h"
+#include "Light.h"
+#include "PointLight.h"
 
 #define ROTATION_SPEED 0.002f
 
@@ -41,10 +42,10 @@ int main(int argc, char* argv[]) {
 	photons.push_back(Photon({ 1.0f, 2.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }, false));
 	photons.push_back(Photon({ 4.0f, 5.0f, 6.0f }, { 0.0f, 1.0f, 0.0f }, { 0, 255, 0, 255 }, false));
 	photons.push_back(Photon({ 7.0f, 8.0f, 9.0f }, { 0.0f, 0.0f, 1.0f }, { 0, 0, 255, 255 }, false));
-	KDTree tree;
-	tree.init(photons);
+	KDTree tree2;
+	tree2.init(photons);
 	math::Vector3 query_point(7.0, 6.0, 9.0);
-	std::vector<SearchResult> res = tree.search(query_point, 5.0f);
+	std::vector<SearchResult> res = tree2.search(query_point, 5.0f);
 	// Print the nearest neighbor and its distance
 	std::cout << "Nearest neighbor index: " << res[0].index << std::endl;
 	std::cout << "Distance to nearest neighbor: " << res[0].distance_squared << std::endl;
@@ -83,24 +84,32 @@ int main(int argc, char* argv[]) {
 
 	//std::thread trace_tread(trace, std::ref(renderer), sdlrenderer, sdltex, std::ref(running));
 
+	PhotonMapper photonMapper = PhotonMapper(&renderer);
+	PointLight light = PointLight(Vector3(0, 0, 0), 250, Color(255,255,255));
+	std::vector<Light*> lights = { &light };
+	KDTree tree = photonMapper.createGlobalIluminationMap(5000, lights);
+
 	while (running)		// the event loop
 	{
 		renderer.trace();
 #ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
 
-		std::vector<Photon> photons;
-		constexpr float step = 1.0f;
-		for (float i = -9.5f; i <= 9.5f; i++) {
-			for (float j = -9.5f; j <= 9.5f; j++) {
-				for (float k = -9.5; k <= 9.5; k++) {
-					if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
-						photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }, false));
-					}
-				}
-			}
-		}
-		KDTree tree;
-		tree.init(photons);
+		//std::vector<Photon> photons;
+		//constexpr float step = 1.0f;
+		//for (float i = -9.5f; i <= 9.5f; i++) {
+		//	for (float j = -9.5f; j <= 9.5f; j++) {
+		//		for (float k = -9.5; k <= 9.5; k++) {
+		//			if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
+		//				photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }, false));
+		//			}
+		//		}
+		//	}
+		//}
+		//KDTree tree;
+		//tree.init(photons);
+
+
+
 		renderer.debug_display_photons(tree);
 #endif
 		while (SDL_PollEvent(&sdlEvent))
@@ -157,8 +166,8 @@ int main(int argc, char* argv[]) {
 				rotation_x = delta_y * ROTATION_SPEED;
 				rotation_y = delta_x * ROTATION_SPEED;
 
-				Matrix<4, 4> rot_x = identity<4>();
-				Matrix<4, 4> rot_y = identity<4>();
+				Matrix<4, 4> rot_x = math::identity<4>();
+				Matrix<4, 4> rot_y = math::identity<4>();
 
 				rot_x[1][1] = cos(rotation_x);
 				rot_x[1][2] = -sin(rotation_x);

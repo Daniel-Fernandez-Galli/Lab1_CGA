@@ -3,7 +3,7 @@
 using namespace std;
 
 
-PaneLight::PaneLight(Vector3 center, float width, float height, Vector3 up, Vector3 right) : center(center), width(width), height(height), up(up), right(right){}
+PaneLight::PaneLight(float potencia, Color color, Vector3 center, float width, float height, Vector3 up, Vector3 right) : Light(potencia, color), center(center), width(width), height(height), up(up), right(right){}
 
 Photon PaneLight::createPhoton() {
 	float width = getRandomFloat(- this->width / 2, this->width / 2);

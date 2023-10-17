@@ -61,7 +61,7 @@ public:
 #define DEBUG_PHOTON_DISPLAY_COLOR_FILL 0xFFFFFFFF
 #define DEBUG_PHOTON_DISPLAY_COLOR_EDGE 0xFFFF0000
 
-	void draw_photon(int x, int y);
+	void draw_photon(int x, int y, Color color, float distance);
 
 	void debug_display_photons(const KDTree &tree);
 

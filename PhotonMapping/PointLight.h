@@ -6,7 +6,7 @@
 class PointLight : public Light {
 public:
     Vector3 center;
-    PointLight(Vector3 center);
+    PointLight(Vector3 center, float potencia, Color color);
     Photon createPhoton() override;
 };
 

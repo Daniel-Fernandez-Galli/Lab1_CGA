@@ -179,12 +179,14 @@ Renderer::~Renderer()
 
 #ifdef PHOTONMAP_DEBUG_API
 
-void Renderer::draw_photon(int x, int y) {
-	constexpr int size = 3;
+void Renderer::draw_photon(int x, int y, Color color, float distance) {
+	int size = 1 + (int)(1000/distance);
 	for (int i = -size; i <= size; i++) {
 		for (int j = -size; j <= size; j++) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
-				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? DEBUG_PHOTON_DISPLAY_COLOR_EDGE : DEBUG_PHOTON_DISPLAY_COLOR_FILL;
+				uint32_t fillColor = color.get_argb();
+				uint32_t borderColor = Color(0, 0, 0).get_argb();
+				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? borderColor : fillColor;
 			}
 		}
 	}
@@ -204,7 +206,7 @@ void Renderer::debug_display_photons(const KDTree& tree)
 		int py = !std::isnan(screen_pos.y) ? static_cast<int>(screen_pos.y) : -1;
 
 		if ((0 <= px) && (px < 600) && (0 <= py) && (py < 600)) {
-			draw_photon(px, py);
+			draw_photon(px, py, photon.power, r->distance_squared);
 		}
 
 	}

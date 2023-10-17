@@ -2,7 +2,7 @@
 #include "utils.h"
 using namespace std;
 
-PointLight::PointLight(Vector3 center) : center(center) {}
+PointLight::PointLight(Vector3 center, float potencia, Color color) : Light(potencia, color), center(center){}
 
 Photon PointLight::createPhoton() {
 	Vector3 dir = chooseARandomPointFromASphere();
