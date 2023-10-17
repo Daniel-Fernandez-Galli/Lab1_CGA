@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-//#define PHOTONMAP_DEBUG_API //comment this line to remove debugging methods
+#define PHOTONMAP_DEBUG_API //comment this line to remove debugging methods
 
 #include "utils.h"
 #include "Camera.h"

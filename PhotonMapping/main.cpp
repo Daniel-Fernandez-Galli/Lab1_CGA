@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 			for (float j = -9.5f; j <= 9.5f; j++) {
 				for (float k = -9.5; k <= 9.5; k++) {
 					if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
-						photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+						photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }, false));
 					}
 				}
 			}
