@@ -22,12 +22,6 @@
 
 #define ROTATION_SPEED 0.002f
 
-void trace(Renderer& renderer, SDL_Renderer* sdlrenderer, SDL_Texture* sdltex, bool &running) {
-	while (running) {
-		renderer.trace(sdlrenderer, sdltex);
-	}
-}
-
 int main(int argc, char* argv[]) {
 
 	//INICIALIZACION
@@ -39,7 +33,7 @@ int main(int argc, char* argv[]) {
 	/* Embree window init */
 	SDL_Window* sdlwindow = SDL_CreateWindow("Photon Mapping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 600, 600, 0);
 	SDL_Renderer* sdlrenderer = SDL_CreateRenderer(sdlwindow, -1, SDL_RENDERER_ACCELERATED);
-	SDL_Texture* sdltex = SDL_CreateTexture(sdlrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
+	SDL_Texture* sdltexture = SDL_CreateTexture(sdlrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
 
 	/* photon kd tree test */
 
@@ -67,7 +61,7 @@ int main(int argc, char* argv[]) {
 	auto glbfile = File::load_glb("../multimesh.glb");
 	auto objects = File::extract_meshes(glbfile, 0);
 
-	Renderer renderer(sdlwindow);
+	Renderer renderer(sdlrenderer, sdlwindow, sdltexture);
 	for (auto& object : objects) {
 		auto meshes = object.get_meshes();
 		auto materials = object.get_materials();
@@ -85,7 +79,7 @@ int main(int argc, char* argv[]) {
 
 	while (running)		// the event loop
 	{
-		renderer.trace(sdlrenderer, sdltex);
+		renderer.trace();
 		while (SDL_PollEvent(&sdlEvent))
 		{
 			if (sdlEvent.type == SDL_WINDOWEVENT && sdlEvent.window.event == SDL_WINDOWEVENT_CLOSE)

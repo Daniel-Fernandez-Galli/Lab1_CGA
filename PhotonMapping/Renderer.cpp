@@ -5,7 +5,8 @@
 
 using namespace math;
 
-Renderer::Renderer(SDL_Window* window) : camera(window), pixels(new uint32_t[600 * 600])
+Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) : 
+	camera(window), renderer(renderer), texture(texture), pixels(new uint32_t[600 * 600])
 {
 }
 
@@ -24,9 +25,8 @@ void Renderer::commit_scene()
 	scene.commit_scene();
 }
 
-void Renderer::trace(SDL_Renderer* renderer, SDL_Texture* texture)
+void Renderer::trace()
 {
-	//draw_lock(mtx);
 
 	for (int x = 0; x < 600; x++) {
 		for (int y = 0; y < 600; y++) {
@@ -82,6 +82,23 @@ void Renderer::trace(SDL_Renderer* renderer, SDL_Texture* texture)
 
 		}
 	}
+
+#ifdef PHOTONMAP_DEBUG_API
+
+	std::vector<Photon> photons;
+	constexpr float step = 0.2f;
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			for (int k = 0; k < 10; k++) {
+				photons.push_back(Photon({ -1.0f + i*step, -1.0f + j*step, -2.0f - k*step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+			}
+		}
+	}
+	KDTree tree;
+	tree.init(photons);
+	debug_display_photons(tree);
+
+#endif
 
 	SDL_UpdateTexture(texture, NULL, pixels, 600 * sizeof(uint32_t));
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -141,3 +158,44 @@ Renderer::~Renderer()
 {
 	delete[] pixels;
 }
+
+#ifdef PHOTONMAP_DEBUG_API
+
+void Renderer::draw_photon(int x, int y) {
+	constexpr int size = 3;
+	for (int i = -size; i <= size; i++) {
+		for (int j = -size; j <= size; j++) {
+			if ( (0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600) ) {
+				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? DEBUG_PHOTON_DISPLAY_COLOR_EDGE : DEBUG_PHOTON_DISPLAY_COLOR_FILL;
+			}
+		}
+	}
+}
+
+void Renderer::debug_display_photons(const KDTree &tree)
+{
+	Vector3 eye = camera.get_cam_data().eye_point;
+	auto res = tree.search(eye);
+
+	for (auto r = res.end() - 1; r > res.begin(); r-- ) {
+		
+		Photon photon = tree.get_photon(r->index);
+		Vector3 pos = photon.get_position();
+		Vector2 screen_pos = camera.to_raster_space(pos);
+		int px = !std::isnan(screen_pos.x) ? static_cast<int>(screen_pos.x) : -1;
+		int py = !std::isnan(screen_pos.y) ? static_cast<int>(screen_pos.y) : -1;
+
+		if ((0 <= px) && (px < 600) && (0 <= py) && (py < 600)) {
+			draw_photon(px, py);
+		}
+		
+	}
+
+	SDL_UpdateTexture(texture, NULL, pixels, 600 * sizeof(uint32_t));
+	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+}
+
+#endif // PHOTONMAP_DEBUG_API
+
+
