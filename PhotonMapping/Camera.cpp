@@ -143,7 +143,7 @@ void Camera::transform(const math::Matrix<4, 4>& transform, bool local_origin, b
 	eye_point.z = cam_to_world[2][3];
 }
 
-math::Vector2 Camera::to_raster_space(const math::Vector3& p) const
+math::Vector2 Camera::to_raster_space(const math::Vector3& p)
 {
 	//auto rot = world_to_cam;
 	//rot[0][3] = rot[1][3] = rot[2][3] = 0.0f;
@@ -156,7 +156,7 @@ math::Vector2 Camera::to_raster_space(const math::Vector3& p) const
 
 	//Vector3 local_z_axis(local_z_axis_matrix[0][0], local_z_axis_matrix[1][0], local_z_axis_matrix[2][0]);
 	Vector3 local_z_axis(cam_to_world[0][2], cam_to_world[1][2], cam_to_world[2][2]);
-	local_z_axis = local_z_axis / cam_to_world[3][3];
+	local_z_axis = local_z_axis;
 
 	Matrix<4, 1> p_world_matrix;
 	p_world_matrix[0][0] = p.x;
@@ -176,16 +176,17 @@ math::Vector2 Camera::to_raster_space(const math::Vector3& p) const
 	}
 
 	Vector2 p_screen;
-	p_screen.x = p_camera.x / -p_camera.z;
-	p_screen.y = p_camera.y / -p_camera.z;
+	p_screen.x = p_camera.x / -(p_camera.z);
+	p_screen.y = p_camera.y / -(p_camera.z);
 
 	Vector2 p_ndc;
-	p_ndc.x = (1 + p_screen.x) * 0.5f;
-	p_ndc.y = (1 - p_screen.y) * 0.5f;
+	float canvas = 2 * tan(yfov * 0.5);
+	p_ndc.x = (p_screen.x + 0.5f * canvas)/canvas;
+	p_ndc.y = (p_screen.y + 0.5f * canvas)/canvas;
 
 	Vector2 p_raster;
 	p_raster.x = std::floor(p_ndc.x * width);
-	p_raster.y = std::floor(p_ndc.y * height);
+	p_raster.y = std::floor((1 - p_ndc.y) * height);
 	return p_raster;
 }
 

@@ -65,7 +65,7 @@ public:
 
 	void transform(const math::Matrix<4, 4> &transform, bool local_origin = false, bool local_axis = false);
 
-	math::Vector2 to_raster_space(const math::Vector3 &v) const;
+	math::Vector2 to_raster_space(const math::Vector3 &v);
 
 	CamData get_cam_data() const;
 

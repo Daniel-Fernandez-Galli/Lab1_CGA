@@ -116,10 +116,12 @@ void Renderer::trace()
 
 	std::vector<Photon> photons;
 	constexpr float step = 1.0f;
-	for (int i = -5; i <= 5; i++) {
-		for (int j = -5; j <= 5; j++) {
-			for (int k = -5; k <= 5; k++) {
-				photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+	for (float i = -9.5f; i <= 9.5f; i++) {
+		for (float j = -9.5f; j <= 9.5f; j++) {
+			for (float k = -9.5; k <= 9.5; k++) {
+				if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
+					photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+				}
 			}
 		}
 	}
