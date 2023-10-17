@@ -215,7 +215,7 @@ Vector3 math::chooseAPointCosineDistribution(Vector3 norm) {
 }
 
 
-Vector3 reflectRay(Vector3 dir, Vector3 norm) {
+Vector3 math::reflectRay(Vector3 dir, Vector3 norm) {
 	float NL = math::dot_product(norm, dir);
 	return 2 * norm * NL - dir;
 }
