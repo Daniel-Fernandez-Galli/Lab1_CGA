@@ -22,12 +22,6 @@
 
 #define ROTATION_SPEED 0.002f
 
-void trace(Renderer& renderer, SDL_Renderer* sdlrenderer, SDL_Texture* sdltex, bool &running) {
-	while (running) {
-		renderer.trace(sdlrenderer, sdltex);
-	}
-}
-
 int main(int argc, char* argv[]) {
 
 	//INICIALIZACION
@@ -39,7 +33,7 @@ int main(int argc, char* argv[]) {
 	/* Embree window init */
 	SDL_Window* sdlwindow = SDL_CreateWindow("Photon Mapping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 600, 600, 0);
 	SDL_Renderer* sdlrenderer = SDL_CreateRenderer(sdlwindow, -1, SDL_RENDERER_ACCELERATED);
-	SDL_Texture* sdltex = SDL_CreateTexture(sdlrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
+	SDL_Texture* sdltexture = SDL_CreateTexture(sdlrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
 
 	/* photon kd tree test */
 
@@ -64,18 +58,24 @@ int main(int argc, char* argv[]) {
 	float rotation_x = 0.0f;
 	float rotation_y = 0.0f;
 
-	auto glbfile = File::load_glb("../multimesh.glb");
+	auto glbfile = File::load_glb("../cornell_box.glb");
 	auto objects = File::extract_meshes(glbfile, 0);
+	auto cameras = File::extract_cameras(glbfile, 0);
 
-	Renderer renderer(sdlwindow);
+	std::unique_ptr<Renderer> renderer_ptr;
+	if (cameras.size() == 0) {
+		renderer_ptr = std::make_unique<Renderer>(sdlrenderer, sdlwindow, sdltexture);
+	} else {
+		renderer_ptr = std::make_unique<Renderer>(sdlrenderer, sdlwindow, sdltexture, cameras[0]);
+	}
+	
+	Renderer& renderer = *renderer_ptr;
 	for (auto& object : objects) {
 		auto meshes = object.get_meshes();
 		auto materials = object.get_materials();
-		for (auto& mesh : meshes) {
-			renderer.attach_mesh(mesh);
-		}
-		for (auto& material : materials) {
-			renderer.attach_material(material);
+		for (auto it = meshes.begin(); it < meshes.end(); it++) {
+			renderer.attach_mesh(meshes[std::distance(meshes.begin(), it)]);
+			renderer.attach_material(materials[std::distance(meshes.begin(), it)]);
 		}
 	}
 
@@ -85,7 +85,24 @@ int main(int argc, char* argv[]) {
 
 	while (running)		// the event loop
 	{
-		renderer.trace(sdlrenderer, sdltex);
+		renderer.trace();
+#ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
+
+		std::vector<Photon> photons;
+		constexpr float step = 1.0f;
+		for (float i = -9.5f; i <= 9.5f; i++) {
+			for (float j = -9.5f; j <= 9.5f; j++) {
+				for (float k = -9.5; k <= 9.5; k++) {
+					if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
+						photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+					}
+				}
+			}
+		}
+		KDTree tree;
+		tree.init(photons);
+		renderer.debug_display_photons(tree);
+#endif
 		while (SDL_PollEvent(&sdlEvent))
 		{
 			if (sdlEvent.type == SDL_WINDOWEVENT && sdlEvent.window.event == SDL_WINDOWEVENT_CLOSE)
