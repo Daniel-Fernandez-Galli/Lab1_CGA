@@ -107,24 +107,30 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 
 	scene.ray_intersect(rayhit);
 
-	Vector3 intersection;
-	intersection.x = ray.orig.x + rayhit.ray.tfar * ray.dir.x;
-	intersection.y = ray.orig.y + rayhit.ray.tfar * ray.dir.y;
-	intersection.z = ray.orig.z + rayhit.ray.tfar * ray.dir.z;
+	bool hasHit = rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
 
-	Vector3 normal = normal_interpolation(
-		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
-		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
-		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
-		rayhit.hit.u,
-		rayhit.hit.v
-	);
+	Vector3 intersection = Vector3(0,0,0);
+	Vector3 normal = Vector3(0, 0, 0);
+	Material mat;
 
-	normal = normalize(normal);
+	if (hasHit) {
+		intersection.x = ray.orig.x + rayhit.ray.tfar * ray.dir.x;
+		intersection.y = ray.orig.y + rayhit.ray.tfar * ray.dir.y;
+		intersection.z = ray.orig.z + rayhit.ray.tfar * ray.dir.z;
 
-	Material mat = scene.get_material(rayhit.hit.geomID);
+		normal = normal_interpolation(
+			scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
+			scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
+			scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
+			rayhit.hit.u,
+			rayhit.hit.v
+		);
 
-	return {intersection, normal, mat};
+		normal = normalize(normal);
+
+		mat = scene.get_material(rayhit.hit.geomID);
+	}
+	return {intersection, normal, mat, hasHit};
 }
 
 void Renderer::move_camera(Direction dir)

@@ -174,9 +174,9 @@ Vector3 math::chooseARandomPointFromAHemisphere(Vector3 norm) {
 	float y = 1;
 	float z = 1;
 	while (x * x + y * y + z * z > 1 || dot_product(norm, Vector3(x, y, z)) < 0.f) {
-		x = getRandomP();
-		y = getRandomP();
-		z = getRandomP();
+		x = getRandomFloat(-1, 1);
+		y = getRandomFloat(-1, 1);
+		z = getRandomFloat(-1, 1);
 	}
 
 	return Vector3(x, y, z);
@@ -186,22 +186,41 @@ Vector3 math::chooseARandomPointFromAHemisphere(Vector3 norm) {
 	return Vector3(0, 0, 0);
 }*/
 
-Vector3 math::chooseAPoinCosineDistribution(Vector3 norm) {
+Vector3 math::chooseAPointCosineDistribution(Vector3 norm) {
 	norm = normalize(norm);
-	float theta = std::atan2(std::sqrt(1 - std::pow(std::cos(static_cast<float>(rand()) / RAND_MAX * M_PI / 2), 2)),
-		std::cos(static_cast<float>(rand()) / RAND_MAX * M_PI / 2));
-	float phi = static_cast<float>(rand()) / RAND_MAX * 2 * M_PI;
+	float rho = std::sqrt(getRandomP());
+	float theta = getRandomP() * 2 * M_PI;
 
 	Vector3 point;
-	point.x = std::sin(theta) * std::cos(phi);
-	point.y = std::sin(theta) * std::sin(phi);
-	point.z = std::cos(theta);
+	point.x = rho * std::cos(theta);
+	point.y = rho * std::sin(theta);
+	point.z = std::sqrt(1 - point.x * point.x - point.y * point.y);
 
-	// Align the point with the normal
-	Vector3 alignedPoint;
-	alignedPoint.x = point.x * norm.x;
-	alignedPoint.y = point.y * norm.y;
-	alignedPoint.z = point.z * norm.z;
+	// Create an arbitrary vector that is not parallel to norm
+	Vector3 arbitrary = (std::abs(norm.x) < 0.9) ? Vector3(1, 0, 0) : Vector3(0, 1, 0);
 
-	return alignedPoint;
+	// Use Gram-Schmidt to create an orthonormal basis
+	Vector3 v = normalize(arbitrary - dot_product(arbitrary, norm) * norm);
+	Vector3 w = cross_product(norm, v);
+
+	// Transform the point to align with the normal
+	Vector3 transformed_point = point.x * v + point.y * w + point.z * norm;
+
+	return transformed_point;
 }
+
+
+Vector3 reflectRay(Vector3 dir, Vector3 norm) {
+	float NL = math::dot_product(norm, dir);
+	return 2 * norm * NL - dir;
+}
+
+float math::max(float a, float b) {
+	return a > b ? a : b;
+}
+
+float math::max(float a, float b, float c) {
+	b = max(b, c);
+	return max(a, b);
+}
+
