@@ -1,6 +1,7 @@
 #include "utils.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <algorithm>
 
 /* Vector */
 
@@ -133,10 +134,14 @@ Matrix<4, 4> math::quaternion_to_rotation_matrix(const Matrix<4, 1>& quaternion)
 }
 
 float math::linear_to_sRGB(float value) {
-	if (value <= 0.0031308)
-		return 12.92 * value;
-	else
-		return 1.055 * std::pow(value, 1.0 / 2.2) - 0.055;
+	float res;
+	if (value <= 0.0031308) {
+		res = 12.92 * value;
+	}
+	else {
+		res = 1.055 * std::pow(value, 1.0 / 2.2) - 0.055;
+	}
+	return std::clamp(res, 0.0f, 1.0f);
 }
 
 

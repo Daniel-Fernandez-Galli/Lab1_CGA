@@ -19,8 +19,8 @@ using namespace math;
 template <typename T>
 std::vector<T> extract_from_accessor(const tinygltf::Model& model, const tinygltf::Accessor& accessor) {
 
-	auto &buffer_view = model.bufferViews[accessor.bufferView];
-	auto &buffer = model.buffers[buffer_view.buffer];
+	auto& buffer_view = model.bufferViews[accessor.bufferView];
+	auto& buffer = model.buffers[buffer_view.buffer];
 
 	const T* buffer_data = reinterpret_cast<const T*>(&buffer.data[buffer_view.byteOffset + accessor.byteOffset]);
 
@@ -61,11 +61,11 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 {
 	std::vector<MeshObject> objects;
 
-	auto &rtcscene = file->model.scenes[scene_index];
+	auto& rtcscene = file->model.scenes[scene_index];
 
 	for (int node_index : rtcscene.nodes) {
 
-		auto &node = file->model.nodes[node_index];
+		auto& node = file->model.nodes[node_index];
 
 		if (node.mesh >= 0) {
 
@@ -83,7 +83,7 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 				quaternion[1][0] = static_cast<float>(node.rotation[1]);
 				quaternion[2][0] = static_cast<float>(node.rotation[2]);
 				quaternion[3][0] = static_cast<float>(node.rotation[3]);
-				
+
 				auto R = math::quaternion_to_rotation_matrix(quaternion);
 
 				transform = R * transform;
@@ -99,12 +99,12 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 
 			MeshObject mesh_object(transform);
 
-			auto &mesh = file->model.meshes[node.mesh];
+			auto& mesh = file->model.meshes[node.mesh];
 
 			for (auto& primitive : mesh.primitives) {
 
 				auto mesh_ptr = new geometry::Mesh();
-				geometry::Mesh &new_mesh = *mesh_ptr;
+				geometry::Mesh& new_mesh = *mesh_ptr;
 
 				const int positions_index = primitive.attributes["POSITION"];
 				if (positions_index >= 0) {
@@ -158,4 +158,61 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 	}
 
 	return objects;
+}
+
+std::vector<CamConstructorData> File::extract_cameras(GLTF_t* file, unsigned int scene_index)
+{
+	std::vector<CamConstructorData> cameras;
+
+	auto& rtcscene = file->model.scenes[scene_index];
+
+	for (int node_index : rtcscene.nodes) {
+
+		auto& node = file->model.nodes[node_index];
+
+		CamConstructorData camera_data;
+
+		for (auto& child_index : node.children) {
+			auto& child = file->model.nodes[child_index];
+			if (child.camera >= 0) {
+
+				auto& cam = file->model.cameras[child.camera];
+
+				if (cam.type == "orthographic") {
+					continue;
+				}
+
+				if (node.rotation.size() == 4) {
+					Matrix<4, 1> quaternion{};
+					quaternion[0][0] = static_cast<float>(node.rotation[0]);
+					quaternion[1][0] = static_cast<float>(node.rotation[1]);
+					quaternion[2][0] = static_cast<float>(node.rotation[2]);
+					quaternion[3][0] = static_cast<float>(node.rotation[3]);
+					camera_data.eye_rotation = quaternion;
+				}
+
+				if (node.translation.size() == 3) {
+					Vector3 T;
+					T.x = static_cast<float>(node.translation[0]);
+					T.y = static_cast<float>(node.translation[1]);
+					T.z = static_cast<float>(node.translation[2]);
+					camera_data.eye_translation = T;
+				}
+
+				camera_data.yfov = cam.perspective.yfov;
+				camera_data.znear = cam.perspective.znear;
+				camera_data.zfar = cam.perspective.zfar;
+
+				cameras.push_back(camera_data);
+			}
+			if (child.rotation.size() == 4) {
+				camera_data.orientation[0][0] = child.rotation[0];
+				camera_data.orientation[1][0] = child.rotation[1];
+				camera_data.orientation[2][0] = child.rotation[2];
+				camera_data.orientation[3][0] = child.rotation[3];
+			}
+		}
+	}
+
+	return cameras;
 }

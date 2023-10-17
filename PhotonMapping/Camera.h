@@ -6,6 +6,15 @@
 #include <embree4/rtcore.h>
 #include <SDL.h>
 
+struct CamConstructorData {
+	math::Vector3 eye_translation;
+	math::Matrix<4, 1> eye_rotation; // quaternions
+	math::Matrix<4, 1> orientation; // quaternions
+	float yfov;
+	float znear;
+	float zfar;
+};
+
 struct CamData {
 
 	math::Vector3 eye_point;
@@ -47,6 +56,8 @@ private:
 public:
 
 	Camera(SDL_Window* window);
+
+	Camera(SDL_Window* window, CamConstructorData data);
 
 	RTCRayHit ray_to_pixel(int x, int y) const;
 

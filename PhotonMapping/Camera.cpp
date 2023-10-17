@@ -10,7 +10,7 @@ Vector3 default_eye_point(0.0f, 0.0f, 0.0f);
 constexpr float default_yfov = pi * 0.5f;
 constexpr float default_znear = 0.001f;
 constexpr float default_zfar = 1000.0f;
-constexpr float default_camera_speed = 0.1f;
+constexpr float default_camera_speed = 0.5f;
 
 Camera::Camera(SDL_Window* window) :
 	window(window),
@@ -21,6 +21,25 @@ Camera::Camera(SDL_Window* window) :
 {
 	SDL_GetWindowSize(window, &width, &height);
 	aspect_ratio = static_cast<float>(width) / height;
+	invert_matrix(world_to_cam);
+}
+
+Camera::Camera(SDL_Window* window, CamConstructorData data) :
+	window(window),
+	cam_to_world(default_cam_to_world),
+	yfov(data.yfov), znear(default_znear), zfar(default_zfar)
+{
+	SDL_GetWindowSize(window, &width, &height);
+	aspect_ratio = static_cast<float>(width) / height;
+
+	Matrix<4,4> rot = quaternion_to_rotation_matrix(data.eye_rotation);
+	Matrix <4, 4> tras = identity<4>();
+	tras[0][3] = data.eye_translation.x;
+	tras[1][3] = data.eye_translation.y;
+	tras[2][3] = data.eye_translation.z;
+	eye_point = data.eye_translation;
+	cam_to_world = tras * cam_to_world;
+	world_to_cam = cam_to_world;
 	invert_matrix(world_to_cam);
 }
 

@@ -58,18 +58,24 @@ int main(int argc, char* argv[]) {
 	float rotation_x = 0.0f;
 	float rotation_y = 0.0f;
 
-	auto glbfile = File::load_glb("../multimesh.glb");
+	auto glbfile = File::load_glb("../cornell_box.glb");
 	auto objects = File::extract_meshes(glbfile, 0);
+	auto cameras = File::extract_cameras(glbfile, 0);
 
-	Renderer renderer(sdlrenderer, sdlwindow, sdltexture);
+	std::unique_ptr<Renderer> renderer_ptr;
+	if (cameras.size() == 0) {
+		renderer_ptr = std::make_unique<Renderer>(sdlrenderer, sdlwindow, sdltexture);
+	} else {
+		renderer_ptr = std::make_unique<Renderer>(sdlrenderer, sdlwindow, sdltexture, cameras[0]);
+	}
+	
+	Renderer& renderer = *renderer_ptr;
 	for (auto& object : objects) {
 		auto meshes = object.get_meshes();
 		auto materials = object.get_materials();
-		for (auto& mesh : meshes) {
-			renderer.attach_mesh(mesh);
-		}
-		for (auto& material : materials) {
-			renderer.attach_material(material);
+		for (auto it = meshes.begin(); it < meshes.end(); it++) {
+			renderer.attach_mesh(meshes[std::distance(meshes.begin(), it)]);
+			renderer.attach_material(materials[std::distance(meshes.begin(), it)]);
 		}
 	}
 

@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#define PHOTONMAP_DEBUG_API //comment this line to remove debugging methods
+//#define PHOTONMAP_DEBUG_API //comment this line to remove debugging methods
 
 #include "utils.h"
 #include "Camera.h"
@@ -26,9 +26,17 @@ private:
 
 	SDL_Texture* texture;
 
+	void normal_gradient_shading(const RTCRayHit &rayhit, uint32_t &r, uint32_t& g, uint32_t& b, bool smooth = false);
+
+	void lambertian_reflectance_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
+
+	void photon_mapping_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
+
 public:
 
 	Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture);
+
+	Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture, CamConstructorData cam_data);
 
 	Renderer(const Renderer&) = delete;
 	Renderer& operator=(const Renderer&) = delete;
