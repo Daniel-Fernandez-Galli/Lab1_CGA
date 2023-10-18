@@ -180,7 +180,7 @@ Renderer::~Renderer()
 #ifdef PHOTONMAP_DEBUG_API
 
 void Renderer::draw_photon(int x, int y, Color color, float distance) {
-	int size = 1 + (int)(1000/distance);
+	int size = 1 + (int)(5/(0.001*distance + 1));
 	for (int i = -size; i <= size; i++) {
 		for (int j = -size; j <= size; j++) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
