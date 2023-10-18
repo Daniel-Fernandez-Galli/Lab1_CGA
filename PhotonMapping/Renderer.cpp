@@ -27,9 +27,9 @@ void Renderer::normal_gradient_shading(const RTCRayHit &rayhit, uint32_t& r, uin
 	b = (uint32_t)(abs(N.z) * 255);
 }
 
-void Renderer::lambertian_reflectance_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b)
+void Renderer::lambertian_surfaces_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b)
 {
-	Vector3 Ng = normal_interpolation(
+	Vector3 N = normal_interpolation(
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
@@ -37,12 +37,12 @@ void Renderer::lambertian_reflectance_shading(const RTCRayHit& rayhit, uint32_t&
 		rayhit.hit.v
 	);
 
-	Ng = normalize(Ng);
+	N = normalize(N);
 
 	Vector3 light_dir = { 0.5f, 1.0f, 0.5f };
 	light_dir = normalize(light_dir);
 
-	float lambertian = dot_product(Ng, light_dir);
+	float lambertian = dot_product(N, light_dir);
 	constexpr float k_diffuse = 1.0f;
 
 	float light_intensity = k_diffuse * lambertian;
@@ -51,15 +51,36 @@ void Renderer::lambertian_reflectance_shading(const RTCRayHit& rayhit, uint32_t&
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	Vector3 ambient_light = mat.basecolor;
 	constexpr float k_ambient = 0.1f;
-	mat.basecolor = k_ambient * ambient_light + mat.basecolor * light_intensity;
-	mat.basecolor = linear_RGB_to_sRGB(mat.basecolor);
-	r = mat.basecolor.x * 255;
-	g = mat.basecolor.y * 255;
-	b = mat.basecolor.z * 255;
+	Vector3 aparent_color;
+	aparent_color = k_ambient * ambient_light + mat.basecolor * light_intensity;
+	aparent_color = linear_RGB_to_sRGB(aparent_color);
+	r = aparent_color.x * 255;
+	g = aparent_color.y * 255;
+	b = aparent_color.z * 255;
 }
 
 void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b)
 {
+	Vector3 N = normal_interpolation(
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
+		rayhit.hit.u,
+		rayhit.hit.v
+	);
+	N = normalize(N);
+
+	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
+	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
+	float t = rayhit.ray.tfar;
+	Vector3 hit_location = orig + t * dir;
+
+	auto mat = scene.get_material(rayhit.hit.geomID);
+
+	auto res = global_photonmap->search_nearest(hit_location, 1);
+	for (int i = 0; i < res.size(); i++) {
+		//float lambertian = dot_product(N, light_dir);
+	}
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :
@@ -102,7 +123,7 @@ void Renderer::trace()
 				uint32_t r, g, b;
 				//normal_gradient_shading(rayhit, r, g, b);
 				//normal_gradient_shading(rayhit, r, g, b, true);
-				lambertian_reflectance_shading(rayhit, r,g,b);
+				lambertian_surfaces_shading(rayhit, r,g,b);
 				pixels[600 * y + x] = (0xFF << 24) | (r << 16) | (g << 8) | b; // ARGB
 			}
 			else {
@@ -111,6 +132,12 @@ void Renderer::trace()
 
 		}
 	}
+
+#ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
+	if (global_photonmap != nullptr) {
+		debug_display_photons(*global_photonmap);
+	}
+#endif
 
 	SDL_UpdateTexture(texture, NULL, pixels, 600 * sizeof(uint32_t));
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -156,6 +183,16 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 	return { intersection, normal, mat };
 }
 
+void Renderer::set_global_photonmap(const KDTree& map)
+{
+	global_photonmap = &map;
+}
+
+void Renderer::set_caustics_photonmap(const KDTree& map)
+{
+	caustics_photonmap = &map;
+}
+
 void Renderer::move_camera(Direction dir)
 {
 	camera.move(dir);
@@ -187,7 +224,7 @@ void Renderer::draw_photon(int x, int y) {
 void Renderer::debug_display_photons(const KDTree& tree)
 {
 	Vector3 eye = camera.get_cam_data().eye_point;
-	auto res = tree.search(eye);
+	auto res = tree.search_radius(eye);
 
 	for (auto r = res.end() - 1; r > res.begin(); r--) {
 

@@ -16,7 +16,7 @@ void KDTree::init(std::vector<Photon> photons) {
 
 }
 
-std::vector<SearchResult> KDTree::search(const Vector3& query, float radius_squared) const
+std::vector<SearchResult> KDTree::search_radius(const Vector3& query, float radius_squared) const
 {
 	if (radius_squared < 0) {
 		throw std::domain_error("Error: Search radius cannot be a negative number");
@@ -30,6 +30,21 @@ std::vector<SearchResult> KDTree::search(const Vector3& query, float radius_squa
 	static_cast<Index_t*>(index.get())->radiusSearch(&query.x, radius_squared, indices_and_distances, params);
 	
 	return reinterpret_cast<std::vector<SearchResult>&>(indices_and_distances);
+}
+
+std::vector<SearchResult> KDTree::search_nearest(const Vector3& query, unsigned int N) const
+{
+	std::vector<uint32_t> indices(N);
+	std::vector<float>    distances(N);
+	static_cast<Index_t*>(index.get())->knnSearch(&query.x, N, &indices[0], &distances[0]);
+
+	std::vector<SearchResult> indices_and_distances(2*N);
+	for (int i = 0; i < indices.size(); i++) {
+		SearchResult sr = { indices[i], distances[i] };
+		indices_and_distances[i] = sr;
+	}
+
+	return indices_and_distances;
 }
 
 Photon KDTree::get_photon(int index) const

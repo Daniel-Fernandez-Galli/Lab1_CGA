@@ -44,7 +44,8 @@ int main(int argc, char* argv[]) {
 	KDTree tree;
 	tree.init(photons);
 	math::Vector3 query_point(7.0, 6.0, 9.0);
-	std::vector<SearchResult> res = tree.search(query_point, 5.0f);
+	std::vector<SearchResult> res = tree.search_radius(query_point, 5.0f);
+	res = tree.search_nearest(query_point, 5);
 	// Print the nearest neighbor and its distance
 	std::cout << "Nearest neighbor index: " << res[0].index << std::endl;
 	std::cout << "Distance to nearest neighbor: " << res[0].distance_squared << std::endl;
@@ -81,28 +82,26 @@ int main(int argc, char* argv[]) {
 
 	renderer.commit_scene();
 
-	//std::thread trace_tread(trace, std::ref(renderer), sdlrenderer, sdltex, std::ref(running));
+	std::vector<Photon> photons2;
+	constexpr float step = 1.0f;
+	for (float i = -9.5f; i <= 9.5f; i++) {
+		for (float j = -9.5f; j <= 9.5f; j++) {
+			for (float k = -9.5; k <= 9.5; k++) {
+				if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
+					photons2.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+				}
+			}
+		}
+	}
+	std::unique_ptr<KDTree> tree_ptr = std::make_unique<KDTree>();
+	KDTree& tree2 = *tree_ptr;
+	tree2.init(photons2);
+	renderer.set_global_photonmap(tree2);
 
 	while (running)		// the event loop
 	{
 		renderer.trace();
-#ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
 
-		std::vector<Photon> photons;
-		constexpr float step = 1.0f;
-		for (float i = -9.5f; i <= 9.5f; i++) {
-			for (float j = -9.5f; j <= 9.5f; j++) {
-				for (float k = -9.5; k <= 9.5; k++) {
-					if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
-						photons.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
-					}
-				}
-			}
-		}
-		KDTree tree;
-		tree.init(photons);
-		renderer.debug_display_photons(tree);
-#endif
 		while (SDL_PollEvent(&sdlEvent))
 		{
 			if (sdlEvent.type == SDL_WINDOWEVENT && sdlEvent.window.event == SDL_WINDOWEVENT_CLOSE)

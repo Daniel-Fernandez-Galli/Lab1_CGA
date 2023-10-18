@@ -26,9 +26,13 @@ private:
 
 	SDL_Texture* texture;
 
+	const KDTree* global_photonmap = nullptr;
+
+	const KDTree* caustics_photonmap = nullptr;
+
 	void normal_gradient_shading(const RTCRayHit &rayhit, uint32_t &r, uint32_t& g, uint32_t& b, bool smooth = false);
 
-	void lambertian_reflectance_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
+	void lambertian_surfaces_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
 
 	void photon_mapping_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
 
@@ -50,6 +54,10 @@ public:
 	void trace();
 
 	raytracing::Hit cast_ray(const raytracing::Ray& ray);
+
+	void set_global_photonmap(const KDTree& map);
+
+	void set_caustics_photonmap(const KDTree& map);
 
 	void move_camera(Direction dir);
 

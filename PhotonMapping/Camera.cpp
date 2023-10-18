@@ -143,7 +143,7 @@ void Camera::transform(const math::Matrix<4, 4>& transform, bool local_origin, b
 	eye_point.z = cam_to_world[2][3];
 }
 
-math::Vector2 Camera::to_raster_space(const math::Vector3& p)
+math::Vector2 Camera::to_raster_space(const math::Vector3& p) const
 {
 	//auto rot = world_to_cam;
 	//rot[0][3] = rot[1][3] = rot[2][3] = 0.0f;

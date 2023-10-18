@@ -48,7 +48,9 @@ public:
 
 	void init(std::vector<Photon> photons);
 
-	std::vector<SearchResult> search(const Vector3& query, float radius_squared = std::numeric_limits<float>::infinity()) const;
+	std::vector<SearchResult> search_radius(const Vector3& query, float radius_squared = std::numeric_limits<float>::infinity()) const;
+
+	std::vector<SearchResult> search_nearest(const Vector3& query, unsigned int N) const;
 
 	Photon get_photon(int index) const;
 
