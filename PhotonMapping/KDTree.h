@@ -46,7 +46,13 @@ private:
 
 public:
 
-	void init(std::vector<Photon> photons);
+	KDTree(std::vector<Photon> photons);
+
+	KDTree() = delete;
+
+	KDTree(const KDTree&) = delete;
+
+	KDTree operator=(const KDTree&) = delete;
 
 	std::vector<SearchResult> search_radius(const Vector3& query, float radius_squared = std::numeric_limits<float>::infinity()) const;
 

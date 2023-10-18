@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#define PHOTONMAP_DEBUG_API //comment this line to remove debugging methods
+//#define PHOTONMAP_DEBUG_API //comment this line to remove debugging methods
 
 #include "utils.h"
 #include "Camera.h"
@@ -55,9 +55,9 @@ public:
 
 	raytracing::Hit cast_ray(const raytracing::Ray& ray);
 
-	void set_global_photonmap(const KDTree& map);
+	void set_global_photonmap(const KDTree* map);
 
-	void set_caustics_photonmap(const KDTree& map);
+	void set_caustics_photonmap(const KDTree* map);
 
 	void move_camera(Direction dir);
 

@@ -6,7 +6,6 @@ PhotonMapper::PhotonMapper(Renderer* renderer) : renderer(renderer) {}
 
 KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector<Light*> lights) {
 	vector<Photon> photonMap;
-	KDTree tree;
 	float potenciaTotal = 0;
 	for (Light* light : lights) {
 		potenciaTotal += light->potencia;
@@ -19,8 +18,7 @@ KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector
 			this->emitPhoton(photon, photonMap);
 		}
 	}
-	tree.init(photonMap);
-	return tree;
+	return KDTree(photonMap);
 }
 
 //Se debe hacer que el Fotón recorra la escena hasta ser absorbido
@@ -78,7 +76,6 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 
 KDTree PhotonMapper::createCausticMap(int numberOfPhotons, std::vector<Light*> lights) {
 	vector<Photon> photonMap;
-	KDTree tree;
 	float potenciaTotal = 0;
 	for (Light* light : lights) {
 		potenciaTotal += light->potencia;
@@ -91,8 +88,7 @@ KDTree PhotonMapper::createCausticMap(int numberOfPhotons, std::vector<Light*> l
 			this->emitPhoton(photon, photonMap);
 		}
 	}
-	tree.init(photonMap);
-	return tree;
+	return KDTree(photonMap);
 }
 
 

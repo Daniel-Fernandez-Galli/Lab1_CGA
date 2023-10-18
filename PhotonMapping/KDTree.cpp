@@ -6,14 +6,13 @@ using namespace nanoflann;
 
 using Index_t = KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<float, PhotonMap>, PhotonMap, 3>;
 
-void KDTree::init(std::vector<Photon> photons) {
-
+KDTree::KDTree(std::vector<Photon> photons)
+{
 	map.photons = photons;
 
 	index = std::make_shared<Index_t>(3, map, KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
 
 	static_cast<Index_t*>(index.get())->buildIndex();
-
 }
 
 std::vector<SearchResult> KDTree::search_radius(const Vector3& query, float radius_squared) const
@@ -38,7 +37,7 @@ std::vector<SearchResult> KDTree::search_nearest(const Vector3& query, unsigned 
 	std::vector<float>    distances(N);
 	static_cast<Index_t*>(index.get())->knnSearch(&query.x, N, &indices[0], &distances[0]);
 
-	std::vector<SearchResult> indices_and_distances(2*N);
+	std::vector<SearchResult> indices_and_distances(N);
 	for (int i = 0; i < indices.size(); i++) {
 		SearchResult sr = { indices[i], distances[i] };
 		indices_and_distances[i] = sr;

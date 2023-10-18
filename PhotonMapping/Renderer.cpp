@@ -77,9 +77,21 @@ void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint
 
 	auto mat = scene.get_material(rayhit.hit.geomID);
 
-	auto res = global_photonmap->search_nearest(hit_location, 1);
-	for (int i = 0; i < res.size(); i++) {
-		//float lambertian = dot_product(N, light_dir);
+	auto results = global_photonmap->search_nearest(hit_location, 1);
+	for (auto &res : results) {
+		Photon p = global_photonmap->get_photon(res.index);
+		float dist = res.distance_squared;
+
+		Vector3 light_dir = hit_location - p.get_position();
+		float lambertian = dot_product(N, light_dir);
+		float k_diffuse = mat.roughness;
+
+		Vector3 aparent_color;
+		aparent_color = mat.basecolor * k_diffuse * lambertian;
+		aparent_color = linear_RGB_to_sRGB(aparent_color);
+		r = aparent_color.x * 255;
+		g = aparent_color.y * 255;
+		b = aparent_color.z * 255;
 	}
 }
 
@@ -124,6 +136,7 @@ void Renderer::trace()
 				//normal_gradient_shading(rayhit, r, g, b);
 				//normal_gradient_shading(rayhit, r, g, b, true);
 				lambertian_surfaces_shading(rayhit, r,g,b);
+				//photon_mapping_shading(rayhit, r,g,b);
 				pixels[600 * y + x] = (0xFF << 24) | (r << 16) | (g << 8) | b; // ARGB
 			}
 			else {
@@ -189,14 +202,14 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 	return {intersection, normal, mat, hasHit};
 }
 
-void Renderer::set_global_photonmap(const KDTree& map)
+void Renderer::set_global_photonmap(const KDTree* map)
 {
-	global_photonmap = &map;
+	global_photonmap = map;
 }
 
-void Renderer::set_caustics_photonmap(const KDTree& map)
+void Renderer::set_caustics_photonmap(const KDTree* map)
 {
-	caustics_photonmap = &map;
+	caustics_photonmap = map;
 }
 
 void Renderer::move_camera(Direction dir)
