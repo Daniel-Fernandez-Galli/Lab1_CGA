@@ -14,7 +14,7 @@ public:
     float height;
 
     PaneLight(float potencia, Color color, Vector3 center, float width, float height, Vector3 up, Vector3 right);
-    Photon createPhoton() override;
+    Photon createPhoton(float potencia) override;
 };
 
 #endif // PANELIGHT_H

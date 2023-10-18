@@ -8,7 +8,7 @@ public:
     float potencia; // En Watts
     Color color;
     Light(float potencia, Color color);
-    virtual Photon createPhoton() = 0;  // Pure virtual function
+    virtual Photon createPhoton(float potencia) = 0;  // Pure virtual function
 };
 
 #endif // LIGHT_H

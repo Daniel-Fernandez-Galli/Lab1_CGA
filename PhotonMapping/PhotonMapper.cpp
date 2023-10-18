@@ -12,10 +12,9 @@ KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector
 		potenciaTotal += light->potencia;
 	}
 	for (Light* light : lights) {
-		potenciaTotal += light->potencia;
 		int lightNumberOfPhotons = numberOfPhotons * light->potencia / potenciaTotal;
 		for (int i = 0; i < lightNumberOfPhotons; i++) {
-			Photon photon = light->createPhoton();
+			Photon photon = light->createPhoton(lightNumberOfPhotons/ numberOfPhotons);
 			this->emitPhoton(photon, photonMap);
 		}
 	}
@@ -35,13 +34,13 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 		float p = getRandomP();
 
 		//Hacer mas eficiente
-		float d_r = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
-		float d_g = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
-		float d_b = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+		float d_r = hit.material.basecolor.x;
+		float d_g = hit.material.basecolor.y;
+		float d_b = hit.material.basecolor.z;
 
-		float s_r = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
-		float s_g = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
-		float s_b = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+		float s_r = hit.material.metallic;
+		float s_g = hit.material.metallic;
+		float s_b = hit.material.metallic;
 
 
 		float Pd = math::max(d_r * photon.power.r, d_g * photon.power.g, d_b * photon.power.b) / math::max(photon.power.r, photon.power.g, photon.power.b);
@@ -49,7 +48,8 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 
 		if (p < Pd) { // reflexión difusa
 			photon.position = hit.intersection;
-			
+			photon.power = Color(photon.power.r * (d_r / Pd), photon.power.g * (d_g / Pd), photon.power.b * (d_b / Pd));
+
 			if (hit.material.metallic < 1) {
 				photon.direction = -1 * photon.direction;
 				photonMap.push_back(photon);
@@ -87,7 +87,7 @@ KDTree PhotonMapper::createCausticMap(int numberOfPhotons, std::vector<Light*> l
 		potenciaTotal += light->potencia;
 		int lightNumberOfPhotons = numberOfPhotons * light->potencia / potenciaTotal;
 		for (int i = 0; i < lightNumberOfPhotons; i++) {
-			Photon photon = light->createPhoton();
+			Photon photon = light->createPhoton(lightNumberOfPhotons / numberOfPhotons);
 			this->emitPhoton(photon, photonMap);
 		}
 	}

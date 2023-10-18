@@ -85,9 +85,9 @@ int main(int argc, char* argv[]) {
 	//std::thread trace_tread(trace, std::ref(renderer), sdlrenderer, sdltex, std::ref(running));
 
 	PhotonMapper photonMapper = PhotonMapper(&renderer);
-	PointLight light = PointLight(Vector3(0, 0, 0), 250, Color(255,255,255));
+	PointLight light = PointLight(Vector3(-10, 0, 0), 250, Color(255,255,255));
 	std::vector<Light*> lights = { &light };
-	KDTree tree = photonMapper.createGlobalIluminationMap(5000, lights);
+	KDTree tree = photonMapper.createGlobalIluminationMap(10000, lights);
 
 	while (running)		// the event loop
 	{
