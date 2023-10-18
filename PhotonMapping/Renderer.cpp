@@ -61,14 +61,14 @@ void Renderer::lambertian_surfaces_shading(const RTCRayHit& rayhit, uint32_t& r,
 
 void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b)
 {
-	Vector3 N = normal_interpolation(
+	Vector3 normal = normal_interpolation(
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
 		rayhit.hit.u,
 		rayhit.hit.v
 	);
-	N = normalize(N);
+	normal = normalize(normal);
 
 	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
 	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
@@ -76,23 +76,28 @@ void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint
 	Vector3 hit_location = orig + t * dir;
 
 	auto mat = scene.get_material(rayhit.hit.geomID);
+	Vector3 aparent_color(0.0f, 0.0f, 0.0f);
 
-	auto results = global_photonmap->search_nearest(hit_location, 1);
+	float worst_dist = 0.0f;
+	unsigned int N = 100;
+	auto results = global_photonmap->search_nearest(hit_location, N);
 	for (auto &res : results) {
 		Photon p = global_photonmap->get_photon(res.index);
 		float dist = res.distance_squared;
+		worst_dist = dist < worst_dist ? worst_dist : dist;
 
 		Vector3 light_dir = hit_location - p.get_position();
-		float lambertian = dot_product(N, light_dir);
 		float k_diffuse = mat.roughness;
+		float light_intensity = k_diffuse;
 
-		Vector3 aparent_color;
-		aparent_color = mat.basecolor * k_diffuse * lambertian;
-		aparent_color = linear_RGB_to_sRGB(aparent_color);
-		r = aparent_color.x * 255;
-		g = aparent_color.y * 255;
-		b = aparent_color.z * 255;
+		aparent_color = aparent_color + (mat.basecolor * k_diffuse) / (1000 * dist);
+
 	}
+	aparent_color = aparent_color / (pi * worst_dist);
+	aparent_color = linear_RGB_to_sRGB(aparent_color);
+	r = aparent_color.x * 255;
+	g = aparent_color.y * 255;
+	b = aparent_color.z * 255;
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :
@@ -135,8 +140,8 @@ void Renderer::trace()
 				uint32_t r, g, b;
 				//normal_gradient_shading(rayhit, r, g, b);
 				//normal_gradient_shading(rayhit, r, g, b, true);
-				lambertian_surfaces_shading(rayhit, r,g,b);
-				//photon_mapping_shading(rayhit, r,g,b);
+				//lambertian_surfaces_shading(rayhit, r,g,b);
+				photon_mapping_shading(rayhit, r,g,b);
 				pixels[600 * y + x] = (0xFF << 24) | (r << 16) | (g << 8) | b; // ARGB
 			}
 			else {
