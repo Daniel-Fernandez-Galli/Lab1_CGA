@@ -111,6 +111,7 @@ int main(int argc, char* argv[]) {
 
 
 		renderer.debug_display_photons(tree);
+		renderer.draw_camera(light.center, Color(255,255,0), 5);
 #endif
 		while (SDL_PollEvent(&sdlEvent))
 		{
