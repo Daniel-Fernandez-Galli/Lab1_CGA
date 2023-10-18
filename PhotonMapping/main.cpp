@@ -17,8 +17,9 @@
 #include "KDTree.h"
 #include "Renderer.h"
 #include "File.h"
-
-#include <thread>
+#include "PhotonMapper.h"
+#include "Light.h"
+#include "PointLight.h"
 
 #define ROTATION_SPEED 0.002f
 
@@ -82,21 +83,10 @@ int main(int argc, char* argv[]) {
 
 	renderer.commit_scene();
 
-	std::vector<Photon> photons2;
-	constexpr float step = 1.0f;
-	for (float i = -9.5f; i <= 9.5f; i++) {
-		for (float j = -9.5f; j <= 9.5f; j++) {
-			for (float k = -9.5; k <= 9.5; k++) {
-				if (std::abs(i) == 9.5f || std::abs(j) == 9.5f || k == -9.5f) {
-					photons2.push_back(Photon({ i * step, j * step, k * step }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
-				}
-			}
-		}
-	}
-	std::unique_ptr<KDTree> tree_ptr = std::make_unique<KDTree>();
-	KDTree& tree2 = *tree_ptr;
-	tree2.init(photons2);
-	renderer.set_global_photonmap(tree2);
+	PhotonMapper photonMapper = PhotonMapper(&renderer);
+	PointLight light = PointLight(Vector3(0, 0, 0), 250, Color(255,255,255));
+	std::vector<Light*> lights = { &light };
+	KDTree tree = photonMapper.createGlobalIluminationMap(5000, lights);
 
 	while (running)		// the event loop
 	{
@@ -156,8 +146,8 @@ int main(int argc, char* argv[]) {
 				rotation_x = delta_y * ROTATION_SPEED;
 				rotation_y = delta_x * ROTATION_SPEED;
 
-				Matrix<4, 4> rot_x = identity<4>();
-				Matrix<4, 4> rot_y = identity<4>();
+				Matrix<4, 4> rot_x = math::identity<4>();
+				Matrix<4, 4> rot_y = math::identity<4>();
 
 				rot_x[1][1] = cos(rotation_x);
 				rot_x[1][2] = -sin(rotation_x);

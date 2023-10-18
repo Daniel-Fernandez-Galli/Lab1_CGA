@@ -86,7 +86,7 @@ namespace math {
 
 	Vector3 chooseARandomPointFromAHemisphere(Vector3 norm);
 
-	Vector3 chooseAPoinCosineDistribution(Vector3 norm);
+	Vector3 chooseAPointCosineDistribution(Vector3 norm);
 
 	/* MATRIX */
 	template <size_t rows, size_t columns>
@@ -139,6 +139,12 @@ namespace math {
 	float linear_to_sRGB(float value);
 
 	Vector3 linear_RGB_to_sRGB(const Vector3& color);
+
+	float max(float a, float b);
+
+	float max(float a, float b, float c);
+
+	Vector3 reflectRay(Vector3 dir, Vector3 norm);
 }
 
 /* 32-bit Color */
@@ -197,6 +203,8 @@ namespace raytracing {
 		math::Vector3 normal;
 
 		Material material;
+
+		bool hasHit;
 
 	};
 

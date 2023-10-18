@@ -1,9 +1,8 @@
 #include "PhotonMapper.h"
+using namespace raytracing;
 
-//Se debe hacer que el Fotón recorra la escena hasta ser absorbido
-Photon PhotonMapper::emitPhoton(Photon photon){
-	return Photon({ 1.0f, 2.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 });
-}
+PhotonMapper::PhotonMapper(Renderer* renderer) : renderer(renderer) {}
+
 
 KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector<Light*> lights) {
 	vector<Photon> photonMap;
@@ -17,10 +16,127 @@ KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector
 		int lightNumberOfPhotons = numberOfPhotons * light->potencia / potenciaTotal;
 		for (int i = 0; i < lightNumberOfPhotons; i++) {
 			Photon photon = light->createPhoton();
-			photon = this->emitPhoton(photon);
-			photonMap.push_back(photon);
+			this->emitPhoton(photon, photonMap);
 		}
 	}
 	tree.init(photonMap);
 	return tree;
+}
+
+//Se debe hacer que el Fotón recorra la escena hasta ser absorbido
+void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
+	//this->scene.
+	Ray ray = {photon.position, photon.direction};
+	Hit hit = {};
+	hit = this->renderer->cast_ray(ray);
+
+	if (hit.hasHit) {
+
+		float p = getRandomP();
+
+		//Hacer mas eficiente
+		float d_r = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+		float d_g = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+		float d_b = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+
+		float s_r = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+		float s_g = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+		float s_b = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+
+
+		float Pd = math::max(d_r * photon.power.r, d_g * photon.power.g, d_b * photon.power.b) / math::max(photon.power.r, photon.power.g, photon.power.b);
+		float Ps = math::max(s_r * photon.power.r, s_g * photon.power.g, s_b * photon.power.b) /math::max(photon.power.r, photon.power.g, photon.power.b);
+
+		if (p < Pd) { // reflexión difusa
+			photon.position = hit.intersection;
+			
+			if (hit.material.metallic < 1) {
+				photon.direction = -1 * photon.direction;
+				photonMap.push_back(photon);
+			}
+
+			photon.power = Color(photon.power.r * (d_r / Pd), photon.power.g * (d_g / Pd), photon.power.b * (d_b / Pd));
+			photon.direction = chooseAPointCosineDistribution(hit.normal);
+
+			emitPhoton(photon, photonMap);
+		}
+		else if (p < Pd + Ps) { // reflexión especular
+
+			photon.position = hit.intersection;	
+			photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+			photon.power = Color(photon.power.r*(s_r/Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
+
+			emitPhoton(photon, photonMap);
+		}else { //absorción
+			photon.position = hit.intersection;
+			photon.direction = -1 * photon.direction;
+
+			photonMap.push_back(photon);
+		}
+	}
+}
+
+KDTree PhotonMapper::createCausticMap(int numberOfPhotons, std::vector<Light*> lights) {
+	vector<Photon> photonMap;
+	KDTree tree;
+	float potenciaTotal = 0;
+	for (Light* light : lights) {
+		potenciaTotal += light->potencia;
+	}
+	for (Light* light : lights) {
+		potenciaTotal += light->potencia;
+		int lightNumberOfPhotons = numberOfPhotons * light->potencia / potenciaTotal;
+		for (int i = 0; i < lightNumberOfPhotons; i++) {
+			Photon photon = light->createPhoton();
+			this->emitPhoton(photon, photonMap);
+		}
+	}
+	tree.init(photonMap);
+	return tree;
+}
+
+
+//Se debe hacer que el Fotón recorra la escena hasta ser absorbido
+void PhotonMapper::emitCausticPhoton(Photon photon, vector<Photon>& photonMap) {
+	//this->scene.
+	Ray ray = { photon.position, photon.direction };
+	Hit hit = {};
+	hit = this->renderer->cast_ray(ray);
+
+	if (hit.hasHit) {
+
+		float p = getRandomP();
+
+		//Hacer mas eficiente
+		float d_r = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+		float d_g = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+		float d_b = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+
+		float s_r = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+		float s_g = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+		float s_b = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+
+
+		float Pd = math::max(d_r * photon.power.r, d_g * photon.power.g, d_b * photon.power.b) / math::max(photon.power.r, photon.power.g, photon.power.b);
+		float Ps = math::max(s_r * photon.power.r, s_g * photon.power.g, s_b * photon.power.b) / math::max(photon.power.r, photon.power.g, photon.power.b);
+
+		if (p < Pd) { // reflexión difusa
+			photon.position = hit.intersection;
+
+			if (hit.material.roughness > 0 && photon.hasSpecularReflection) {
+				photon.direction = -1 * photon.direction;
+				photonMap.push_back(photon);
+			}
+
+		}
+		else if (p < Pd + Ps) { // reflexión especular
+
+			photon.position = hit.intersection;
+			photon.hasSpecularReflection = true;
+			photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+			photon.power = Color(photon.power.r * (s_r / Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
+
+			emitPhoton(photon, photonMap);
+		}
+	}
 }

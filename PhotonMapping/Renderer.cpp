@@ -163,24 +163,30 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 
 	scene.ray_intersect(rayhit);
 
-	Vector3 intersection;
-	intersection.x = ray.orig.x + rayhit.ray.tfar * ray.dir.x;
-	intersection.y = ray.orig.y + rayhit.ray.tfar * ray.dir.y;
-	intersection.z = ray.orig.z + rayhit.ray.tfar * ray.dir.z;
+	bool hasHit = rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
 
-	Vector3 normal = normal_interpolation(
-		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
-		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
-		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
-		rayhit.hit.u,
-		rayhit.hit.v
-	);
+	Vector3 intersection = Vector3(0,0,0);
+	Vector3 normal = Vector3(0, 0, 0);
+	Material mat;
 
-	normal = normalize(normal);
+	if (hasHit) {
+		intersection.x = ray.orig.x + rayhit.ray.tfar * ray.dir.x;
+		intersection.y = ray.orig.y + rayhit.ray.tfar * ray.dir.y;
+		intersection.z = ray.orig.z + rayhit.ray.tfar * ray.dir.z;
 
-	Material mat = scene.get_material(rayhit.hit.geomID);
+		normal = normal_interpolation(
+			scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
+			scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
+			scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
+			rayhit.hit.u,
+			rayhit.hit.v
+		);
 
-	return { intersection, normal, mat };
+		normal = normalize(normal);
+
+		mat = scene.get_material(rayhit.hit.geomID);
+	}
+	return {intersection, normal, mat, hasHit};
 }
 
 void Renderer::set_global_photonmap(const KDTree& map)
@@ -210,12 +216,14 @@ Renderer::~Renderer()
 
 #ifdef PHOTONMAP_DEBUG_API
 
-void Renderer::draw_photon(int x, int y) {
-	constexpr int size = 3;
+void Renderer::draw_photon(int x, int y, Color color, float distance) {
+	int size = 1 + (int)(1000/distance);
 	for (int i = -size; i <= size; i++) {
 		for (int j = -size; j <= size; j++) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
-				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? DEBUG_PHOTON_DISPLAY_COLOR_EDGE : DEBUG_PHOTON_DISPLAY_COLOR_FILL;
+				uint32_t fillColor = color.get_argb();
+				uint32_t borderColor = Color(0, 0, 0).get_argb();
+				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? borderColor : fillColor;
 			}
 		}
 	}
@@ -235,7 +243,7 @@ void Renderer::debug_display_photons(const KDTree& tree)
 		int py = !std::isnan(screen_pos.y) ? static_cast<int>(screen_pos.y) : -1;
 
 		if ((0 <= px) && (px < 600) && (0 <= py) && (py < 600)) {
-			draw_photon(px, py);
+			draw_photon(px, py, photon.power, r->distance_squared);
 		}
 
 	}

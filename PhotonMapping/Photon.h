@@ -7,23 +7,23 @@ using namespace math;
 
 class Photon
 {
-private:
+public:
 
 	Vector3 position;
 
 	Vector3 direction;
 
-	Color color;
+	Color power;
 
-public:
+	bool hasSpecularReflection;
 
-	Photon(Vector3 pos, Vector3 dir, Color col);
+	Photon(Vector3 pos, Vector3 dir, Color col, bool hasSpecularReflection);
 
 	Vector3 get_position() const;
 
 	Vector3 get_direction() const;
 
-	Color get_color() const;
+	Color get_power() const;
 
 };
 
