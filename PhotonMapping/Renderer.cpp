@@ -78,8 +78,9 @@ void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint
 	Vector3 indirect_light = get_indirect_light(rayhit);
 	Vector3 direct_light = get_direct_light(rayhit);
 	Vector3 specular_reflection = mat.roughness == 0 ? get_specular_reflection(rayhit) : Vector3(0.0f, 0.0f, 0.0f);
+	Vector3 specular_refraction = mat.transmission == 1 ? get_specular_refraction(rayhit) : Vector3(0.0f, 0.0f, 0.0f);
 
-	Vector3 aparent_color = direct_light + indirect_light + specular_reflection;
+	Vector3 aparent_color = direct_light + indirect_light + specular_reflection + specular_refraction;
 
 	aparent_color = linear_RGB_to_sRGB(aparent_color);
 
@@ -182,6 +183,20 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	float ks = 1.0f - mat.roughness;
 
+	if (ks != 1.0f) {
+
+		if (mat.emission.x == 1.0f) {
+			return Vector3(1.0f, 1.0f, 1.0f);
+		}
+
+		Vector3 indirect_light = get_indirect_light(rayhit);
+		Vector3 direct_light = get_direct_light(rayhit);
+
+		Vector3 aparent_color = direct_light + indirect_light;
+
+		return aparent_color;
+	}
+
 	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
 	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
 	float t = rayhit.ray.tfar;
@@ -197,13 +212,55 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 
 	N = normalize(N);
 
-	if (ks != 1.0f) {
-		Ray V(hit_location, camera.get_cam_data().eye_point - hit_location);
-		Ray L(hit_location, placeholder_light_position - hit_location);
-		Vector3 H_dir = normalize(normalize(L.dir - L.orig) + normalize(V.dir - V.orig));
+	Vector3 reflected_dir = reflectRay(-normalize(dir), N);
 
-		auto mat = scene.get_material(rayhit.hit.geomID);
-		if (mat.emission.x == 1) {
+	struct RTCRayHit rayhit_refl {};
+	rayhit_refl.ray.org_x = hit_location.x;
+	rayhit_refl.ray.org_y = hit_location.y;
+	rayhit_refl.ray.org_z = hit_location.z;
+	rayhit_refl.ray.dir_x = reflected_dir.x;
+	rayhit_refl.ray.dir_y = reflected_dir.y;
+	rayhit_refl.ray.dir_z = reflected_dir.z;
+	rayhit_refl.ray.tnear = 0.01f;
+	rayhit_refl.ray.tfar = 1000.0f;
+	rayhit_refl.ray.mask = -1;
+	rayhit_refl.ray.flags = 0;
+	rayhit_refl.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+	rayhit_refl.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+	scene.ray_intersect(rayhit_refl);
+
+	if (rayhit_refl.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
+
+	Vector3 spec_refl = get_specular_reflection(rayhit_refl);
+	if ((mat.metallic == 0.0f) && (spec_refl != Vector3(1.0f, 1.0f, 1.0f)))
+	{
+		//Fresnel-Schlick approximation
+		float ior = 1.450f;
+		float rho_zero = (1 - ior) / (1 - pow(ior, 2));
+		float cos_theta = dot_product(N, normalize(dir));
+		float rho_theta = rho_zero + (1 - rho_zero) * pow(cos_theta, 5);
+		rho_theta = std::clamp(rho_theta, 0.0f, 1.0f);
+		spec_refl = spec_refl * rho_theta;
+		auto mat2 = scene.get_material(rayhit_refl.hit.geomID);
+		float kt = mat2.transmission;
+		if (kt == 1.0f) {
+			Vector3 spec_refr = get_specular_refraction(rayhit);
+			spec_refl = spec_refl + (1 - rho_theta) * spec_refr;
+		}
+	}
+	return spec_refl;
+}
+
+Vector3 Renderer::get_specular_refraction(const RTCRayHit& rayhit)
+{
+	auto mat = scene.get_material(rayhit.hit.geomID);
+	float kt = mat.transmission;
+
+	if (kt != 1.0f) {
+		if (mat.emission.x == 1.0f) {
 			return Vector3(1.0f, 1.0f, 1.0f);
 		}
 
@@ -215,29 +272,47 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 		return aparent_color;
 	}
 
-	Vector3 reflected_dir = reflectRay(-normalize(dir), N);
+	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
+	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
+	float t = rayhit.ray.tfar;
+	Vector3 hit_location = orig + t * dir;
 
-	struct RTCRayHit rayhit2 {};
-	rayhit2.ray.org_x = hit_location.x;
-	rayhit2.ray.org_y = hit_location.y;
-	rayhit2.ray.org_z = hit_location.z;
-	rayhit2.ray.dir_x = reflected_dir.x;
-	rayhit2.ray.dir_y = reflected_dir.y;
-	rayhit2.ray.dir_z = reflected_dir.z;
-	rayhit2.ray.tnear = 0.01f;
-	rayhit2.ray.tfar = 1000.0f;
-	rayhit2.ray.mask = -1;
-	rayhit2.ray.flags = 0;
-	rayhit2.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-	rayhit2.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+	Vector3 N = normal_interpolation(
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
+		rayhit.hit.u,
+		rayhit.hit.v
+	);
 
-	scene.ray_intersect(rayhit2);
+	N = normalize(N);
 
-	if (rayhit2.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
+	float ior_inv = 1 / 1.45f;
+	float cos_theta = dot_product(N, normalize(dir));
+	Vector3 refracted_dir = ior_inv * (normalize(dir) + ((ior_inv * cos_theta - sqrt(1 - pow(ior_inv, 2) * (1 - pow(cos_theta, 2)))) * N));
+	refracted_dir = normalize(refracted_dir);
+
+	struct RTCRayHit rayhit_refr {};
+	rayhit_refr.ray.org_x = hit_location.x;
+	rayhit_refr.ray.org_y = hit_location.y;
+	rayhit_refr.ray.org_z = hit_location.z;
+	rayhit_refr.ray.dir_x = refracted_dir.x;
+	rayhit_refr.ray.dir_y = refracted_dir.y;
+	rayhit_refr.ray.dir_z = refracted_dir.z;
+	rayhit_refr.ray.tnear = 0.01f;
+	rayhit_refr.ray.tfar = 1000.0f;
+	rayhit_refr.ray.mask = -1;
+	rayhit_refr.ray.flags = 0;
+	rayhit_refr.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+	rayhit_refr.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+	scene.ray_intersect(rayhit_refr);
+
+	if (rayhit_refr.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
 		return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
-	return get_specular_reflection(rayhit2);
+	return get_specular_refraction(rayhit_refr);
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :
@@ -283,13 +358,13 @@ void Renderer::trace()
 				//lambertian_surfaces_shading(rayhit, r,g,b);
 				photon_mapping_shading(rayhit, r, g, b);
 				pixels[600 * y + x] = (0xFF << 24) | (r << 16) | (g << 8) | b; // ARGB
-		}
+			}
 			else {
 				pixels[600 * y + x] = 0x00000000;
 			}
 
+		}
 	}
-}
 
 #ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
 	if (global_photonmap != nullptr) {

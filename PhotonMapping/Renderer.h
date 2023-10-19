@@ -49,6 +49,8 @@ private:
 
 	Vector3 get_specular_reflection(const RTCRayHit &rayhit);
 
+	Vector3 get_specular_refraction(const RTCRayHit& rayhit);
+
 public:
 
 	Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture);
