@@ -9,7 +9,7 @@
 using namespace math;
 using namespace raytracing;
 
-Vector3 placeholder_light_position(0.0f, 4.0f, 0.0f);
+Vector3 placeholder_light_position(0.0f, 9.67155f, 0.0f);
 
 void Renderer::normal_gradient_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b, bool smooth)
 {
@@ -111,19 +111,21 @@ Vector3 Renderer::get_direct_light(const RTCRayHit& rayhit)
 
 	Vector3 light_dir = placeholder_light_position - hit_location;
 
-	Ray L(hit_location, -light_dir);
-	Hit L_hit = cast_ray(L);
-
-	if ((L_hit.material.transmission == 0) && (L_hit.material.emission.x == 0)) {
-		return Vector3(0.0f, 0.0f, 0.0f);
-	}
-
 	light_dir = normalize(light_dir);
 	float lambertian = dot_product(N, light_dir);
 	float k_direct = k_diffuse * lambertian;
 	k_direct = std::max(0.0f, k_direct);
 
-	return mat.basecolor * k_direct;
+	Vector3 direct_light = mat.basecolor * k_direct;
+
+	Ray L(hit_location, light_dir);
+	Hit L_hit = cast_ray(L);
+
+	if (L_hit.material.emission.x == 0.0f) {
+		direct_light = direct_light * L_hit.material.transmission;
+	}
+
+	return direct_light;
 }
 
 Vector3 Renderer::get_indirect_light(const RTCRayHit& rayhit)
@@ -157,7 +159,7 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 	Vector3 aparent_color(0.0f, 0.0f, 0.0f);
 
 	float worst_dist = 0.0f;
-	unsigned int N = (unsigned int)std::max(1.0f, 0.0001f * photon_count);
+	unsigned int N = (unsigned int)std::max(1.0f, 0.0001f * photon_global_count);
 	auto results = global_photonmap->search_nearest(approx_hit_pos, N);
 	for (auto& res : results) {
 		Photon p = global_photonmap->get_photon(res.index);
@@ -166,10 +168,25 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 
 		float k_diffuse = mat.roughness;
 		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
-		aparent_color = aparent_color + (power * k_diffuse) / (photon_count * dist);
+		aparent_color = aparent_color + (power * k_diffuse) / (photon_global_count * dist);
 
 	}
-	aparent_color = aparent_color / (0.3 * pi * worst_dist);
+	aparent_color = aparent_color / (0.3f * pi * worst_dist);
+
+	Vector3 caustics_color(0.0f, 0.0f, 0.0f);
+	results = caustics_photonmap->search_nearest(approx_hit_pos, N);
+	for (auto& res : results) {
+		Photon p = caustics_photonmap->get_photon(res.index);
+		float dist = res.distance_squared;
+		worst_dist = dist < worst_dist ? worst_dist : dist;
+
+		float k_diffuse = mat.roughness;
+		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
+		caustics_color = caustics_color + (power * k_diffuse) / (photon_global_count * dist);
+
+	}
+
+	aparent_color = aparent_color + caustics_color / (0.3f * pi * worst_dist);
 
 	discrete_radiances[approx_hit_pos] = aparent_color;
 
@@ -190,9 +207,9 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 		}
 
 		Vector3 indirect_light = get_indirect_light(rayhit);
-		Vector3 direct_light = get_direct_light(rayhit);
+		//Vector3 direct_light = get_direct_light(rayhit);
 
-		Vector3 aparent_color = direct_light + indirect_light;
+		Vector3 aparent_color = indirect_light;
 
 		return aparent_color;
 	}
@@ -265,9 +282,9 @@ Vector3 Renderer::get_specular_refraction(const RTCRayHit& rayhit)
 		}
 
 		Vector3 indirect_light = get_indirect_light(rayhit);
-		Vector3 direct_light = get_direct_light(rayhit);
+		//Vector3 direct_light = get_direct_light(rayhit);
 
-		Vector3 aparent_color = direct_light + indirect_light;
+		Vector3 aparent_color = indirect_light;
 
 		return aparent_color;
 	}
@@ -368,7 +385,10 @@ void Renderer::trace()
 
 #ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
 	if (global_photonmap != nullptr) {
-		debug_display_photons(*global_photonmap);
+		//debug_display_photons(*global_photonmap);
+	}	
+	if (caustics_photonmap != nullptr) {
+		debug_display_photons(*caustics_photonmap);
 	}
 #endif
 
@@ -424,13 +444,13 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 
 void Renderer::set_global_photonmap(const KDTree* map, unsigned int count)
 {
-	photon_count += count;
+	photon_global_count += count;
 	global_photonmap = map;
 }
 
 void Renderer::set_caustics_photonmap(const KDTree* map, unsigned int count)
 {
-	photon_count += count;
+	photon_caustic_count += count;
 	caustics_photonmap = map;
 }
 

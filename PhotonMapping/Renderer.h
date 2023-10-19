@@ -31,7 +31,9 @@ private:
 
 	const KDTree* caustics_photonmap = nullptr;
 
-	unsigned int photon_count = 0;
+	unsigned int photon_global_count = 0;
+
+	unsigned int photon_caustic_count = 0;
 
 	std::unordered_map<Vector3, Vector3> discrete_radiances;
 

@@ -276,6 +276,9 @@ float math::max(float a, float b) {
 }
 
 float math::max(float a, float b, float c) {
+	if (a == 0 && b == 0 && c == 0) {
+		return 0.001;
+	}
 	b = max(b, c);
 	return max(a, b);
 }

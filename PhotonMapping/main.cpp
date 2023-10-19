@@ -89,7 +89,9 @@ int main(int argc, char* argv[]) {
 	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 9, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
 	std::vector<Light*> lights = { &light };
 	KDTree tree2 = photonMapper.createGlobalIluminationMap(PHOTON_COUNT, lights);
+	KDTree tree3 = photonMapper.createCausticMap(2*PHOTON_COUNT, lights);
 	renderer.set_global_photonmap(&tree2, PHOTON_COUNT);
+	renderer.set_caustics_photonmap(&tree3, PHOTON_COUNT);
 
 	while (running)		// the event loop
 	{
