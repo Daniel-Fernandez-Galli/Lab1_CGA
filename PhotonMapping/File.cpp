@@ -147,6 +147,16 @@ std::vector<MeshObject> File::extract_meshes(GLTF_t* file, unsigned int scene_in
 					new_material.metallic = mat.pbrMetallicRoughness.metallicFactor;
 					new_material.roughness = mat.pbrMetallicRoughness.roughnessFactor;
 
+					new_material.emission.x = mat.emissiveFactor[0];
+					new_material.emission.y = mat.emissiveFactor[1];
+					new_material.emission.z = mat.emissiveFactor[2];
+
+					auto transmission_extension = mat.extensions.find("KHR_materials_transmission");
+					if (transmission_extension != mat.extensions.end()) {
+						auto transmission_object = transmission_extension->second.Get("transmissionFactor");
+						new_material.transmission = transmission_object.GetNumberAsDouble();
+					}
+
 				}
 
 				mesh_object.add_mesh(new_mesh);

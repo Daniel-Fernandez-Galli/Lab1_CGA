@@ -4,7 +4,7 @@
 #include <cmath>
 #include <algorithm>
 
-#define RESOLUTION 1
+#define RESOLUTION 3
 
 using namespace math;
 using namespace raytracing;
@@ -150,7 +150,7 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 		aparent_color = aparent_color + (power * k_diffuse) / (photon_count * dist);
 
 	}
-	aparent_color = aparent_color / (pi * worst_dist * worst_dist);
+	aparent_color = aparent_color / (20 * pi * worst_dist * worst_dist);
 
 	discrete_radiances[approx_hit_pos] = aparent_color;
 
@@ -189,7 +189,7 @@ Vector3 Renderer::specular_reflection(const RTCRayHit& rayhit)
 
 	Hit reflect_hit = cast_ray(reflected_ray);
 
-	return Vector3();
+	return Vector3(0.0f, 0.0f, 0.0f);
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :

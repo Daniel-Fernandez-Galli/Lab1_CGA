@@ -62,10 +62,10 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 			emitPhoton(photon, photonMap);
 		}
 		else if (p < Pd + Ps) { // reflexión especular
-			bool objectIsTransparent = true;
+			bool objectIsTransparent = (hit.material.transmission == 1.0f);
 			photon.position = hit.intersection;	
 			if (objectIsTransparent) {
-				float materialRefractionIndex = 1.2;
+				float materialRefractionIndex = 1.450f;
 				if(dot_product(-1 * photon.direction, hit.normal) > 0){//Estoy afuera
 				
 
@@ -88,14 +88,13 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 
 				}
 
-
 			}
 			else {
 				photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
 			}
 
 			photon.power = Color(photon.power.r * (s_r / Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
-			emitPhoton(photon, photonMap);
+			//emitPhoton(photon, photonMap);
 		}else { //absorción
 			photon.position = hit.intersection;
 			photon.direction = -1 * photon.direction;

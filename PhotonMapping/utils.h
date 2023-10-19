@@ -185,8 +185,10 @@ struct Color {
 
 struct Material {
 	math::Vector3 basecolor = {0.8f, 0.8f, 0.8f};
+	math::Vector3 emission = { 0.0f, 0.0f, 0.0f };
 	float metallic = 0.0f;
 	float roughness = 0.4f;
+	float transmission = 0.0f;
 	//bool double_sided;
 };
 

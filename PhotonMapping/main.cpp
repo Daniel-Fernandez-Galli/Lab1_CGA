@@ -23,7 +23,7 @@
 #include "PaneLight.h"
 
 #define ROTATION_SPEED 0.002f
-#define PHOTON_COUNT 500000
+#define PHOTON_COUNT 2'000'000
 
 int main(int argc, char* argv[]) {
 
