@@ -86,6 +86,8 @@ public:
 
 	void debug_display_photons(const KDTree &tree);
 
+	void draw_camera(Vector3 position, Color color, float distance);
+
 #endif // PHOTONMAP_DEBUG_API
 
 };

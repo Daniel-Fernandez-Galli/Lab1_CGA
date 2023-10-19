@@ -11,10 +11,9 @@ KDTree PhotonMapper::createGlobalIluminationMap(int numberOfPhotons, std::vector
 		potenciaTotal += light->potencia;
 	}
 	for (Light* light : lights) {
-		potenciaTotal += light->potencia;
 		int lightNumberOfPhotons = numberOfPhotons * light->potencia / potenciaTotal;
 		for (int i = 0; i < lightNumberOfPhotons; i++) {
-			Photon photon = light->createPhoton();
+			Photon photon = light->createPhoton(lightNumberOfPhotons/ numberOfPhotons);
 			this->emitPhoton(photon, photonMap);
 		}
 	}
@@ -28,18 +27,22 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 	Hit hit = {};
 	hit = this->renderer->cast_ray(ray);
 
+	////Delete
+	//photon.position = photon.position + photon.direction * 5;
+	//photonMap.push_back(photon);
+
 	if (hit.hasHit) {
 
 		float p = getRandomP();
 
 		//Hacer mas eficiente
-		float d_r = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
-		float d_g = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
-		float d_b = (1.0f - hit.material.metallic) * (1.0f - hit.material.roughness);
+		float d_r = hit.material.basecolor.x;
+		float d_g = hit.material.basecolor.y;
+		float d_b = hit.material.basecolor.z;
 
-		float s_r = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
-		float s_g = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
-		float s_b = hit.material.metallic + hit.material.roughness * (1.0f - hit.material.metallic);
+		float s_r = hit.material.metallic;
+		float s_g = hit.material.metallic;
+		float s_b = hit.material.metallic;
 
 
 		float Pd = math::max(d_r * photon.power.r, d_g * photon.power.g, d_b * photon.power.b) / math::max(photon.power.r, photon.power.g, photon.power.b);
@@ -47,7 +50,7 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 
 		if (p < Pd) { // reflexión difusa
 			photon.position = hit.intersection;
-			
+
 			if (hit.material.metallic < 1) {
 				photon.direction = -1 * photon.direction;
 				photonMap.push_back(photon);
@@ -59,11 +62,39 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 			emitPhoton(photon, photonMap);
 		}
 		else if (p < Pd + Ps) { // reflexión especular
-
+			bool objectIsTransparent = true;
 			photon.position = hit.intersection;	
-			photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
-			photon.power = Color(photon.power.r*(s_r/Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
+			if (objectIsTransparent) {
+				float materialRefractionIndex = 1.2;
+				if(dot_product(-1 * photon.direction, hit.normal) > 0){//Estoy afuera
+				
 
+					if (hasTotalInternalRefraction(-1 * photon.direction, hit.normal, 1, materialRefractionIndex)) {//Refracción Total Interna
+						photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+					}
+					else {
+						photon.direction = calculateT(-1 * photon.direction,hit.normal, 1, materialRefractionIndex);
+					}
+
+				}
+				else {//Estoy adentro
+
+					if (hasTotalInternalRefraction(-1 * photon.direction, -1 * hit.normal, materialRefractionIndex, 1)) {//Refracción Total Interna
+						photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+					}
+					else {
+						photon.direction = calculateT(-1 * photon.direction, hit.normal, materialRefractionIndex, 1);
+					}
+
+				}
+
+
+			}
+			else {
+				photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+			}
+
+			photon.power = Color(photon.power.r * (s_r / Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
 			emitPhoton(photon, photonMap);
 		}else { //absorción
 			photon.position = hit.intersection;
@@ -84,7 +115,7 @@ KDTree PhotonMapper::createCausticMap(int numberOfPhotons, std::vector<Light*> l
 		potenciaTotal += light->potencia;
 		int lightNumberOfPhotons = numberOfPhotons * light->potencia / potenciaTotal;
 		for (int i = 0; i < lightNumberOfPhotons; i++) {
-			Photon photon = light->createPhoton();
+			Photon photon = light->createPhoton(lightNumberOfPhotons / numberOfPhotons);
 			this->emitPhoton(photon, photonMap);
 		}
 	}

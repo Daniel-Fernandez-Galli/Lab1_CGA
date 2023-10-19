@@ -20,6 +20,7 @@
 #include "PhotonMapper.h"
 #include "Light.h"
 #include "PointLight.h"
+#include "PaneLight.h"
 
 #define ROTATION_SPEED 0.002f
 #define PHOTON_COUNT 500000
@@ -84,7 +85,8 @@ int main(int argc, char* argv[]) {
 	renderer.commit_scene();
 
 	PhotonMapper photonMapper = PhotonMapper(&renderer);
-	PointLight light = PointLight(Vector3(0, 0, 0), 250, Color(255,255,255));
+	//PointLight light = PointLight(Vector3(0, 9, 0), 1, Color(255, 255, 255));
+	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 9, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
 	std::vector<Light*> lights = { &light };
 	KDTree tree2 = photonMapper.createGlobalIluminationMap(PHOTON_COUNT, lights);
 	renderer.set_global_photonmap(&tree2, PHOTON_COUNT);

@@ -168,7 +168,7 @@ float math::getRandomP() {
 }
 
 float math::getRandomFloat(float lowerBound, float upperBound) {
-	return getRandomP() * (upperBound - lowerBound) + lowerBound;
+	return getRandomP() * std::abs(upperBound - lowerBound) + lowerBound;
 }
 
 Vector3 math::chooseARandomPointFromASphere() {
@@ -176,9 +176,9 @@ Vector3 math::chooseARandomPointFromASphere() {
 	float y = 1;
 	float z = 1;
 	while (x * x + y * y + z * z > 1) {
-		x = getRandomP();
-		y = getRandomP();
-		z = getRandomP();
+		x = getRandomFloat(-1, 1);
+		y = getRandomFloat(-1, 1);
+		z = getRandomFloat(-1, 1);
 	}
 
 	return Vector3(x, y , z);
@@ -283,4 +283,19 @@ float math::max(float a, float b, float c) {
 Color::operator Vector3()
 {
 	return Vector3(fr(), fg(), fb());
+}
+
+bool math::hasTotalInternalRefraction(Vector3 I, Vector3 N, float ni, float nt) {
+	float nr = ni / nt;
+	float N_I = dot_product(N, I);
+	return 0 > 1 - nr * nr * (1 - N_I * N_I);
+
+}
+
+Vector3 math::calculateT(Vector3 I, Vector3 N, float ni, float nt) {
+
+	float nr = ni / nt;
+	float N_I = dot_product(N, I);
+	Vector3 T = (nr * N_I - sqrt(1 - nr * nr * (1 - N_I * N_I))) * N - nr * I;
+	return T;
 }

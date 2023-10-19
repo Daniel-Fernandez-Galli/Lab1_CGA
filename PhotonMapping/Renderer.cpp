@@ -329,7 +329,7 @@ Renderer::~Renderer()
 #ifdef PHOTONMAP_DEBUG_API
 
 void Renderer::draw_photon(int x, int y, Color color, float distance) {
-	int size = 1 + (int)(1000/distance);
+	int size = 1 + (int)(5/(0.001*distance + 1));
 	for (int i = -size; i <= size; i++) {
 		for (int j = -size; j <= size; j++) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
@@ -359,6 +359,24 @@ void Renderer::debug_display_photons(const KDTree& tree)
 		}
 
 	}
+
+	SDL_UpdateTexture(texture, NULL, pixels, 600 * sizeof(uint32_t));
+	SDL_RenderCopy(renderer, texture, NULL, NULL);
+	SDL_RenderPresent(renderer);
+}
+
+void Renderer::draw_camera(Vector3 position, Color color, float distance) {
+	Vector3 eye = camera.get_cam_data().eye_point;
+
+
+	Vector2 screen_pos = camera.to_raster_space(position);
+	int px = !std::isnan(screen_pos.x) ? static_cast<int>(screen_pos.x) : -1;
+	int py = !std::isnan(screen_pos.y) ? static_cast<int>(screen_pos.y) : -1;
+
+	if ((0 <= px) && (px < 600) && (0 <= py) && (py < 600)) {
+		draw_photon(px, py, Color(255,255,0), 10);
+	}
+
 
 	SDL_UpdateTexture(texture, NULL, pixels, 600 * sizeof(uint32_t));
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
