@@ -139,6 +139,9 @@ Vector3 Renderer::get_indirect_light(const RTCRayHit& rayhit)
 	unsigned int geom_id = rayhit.hit.geomID;
 
 	Vector3 indirect_light;
+	if (global_photonmap == nullptr || caustics_photonmap == nullptr) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
 	auto radiance_itr = discrete_radiances.find(approx);
 	if (radiance_itr == discrete_radiances.end()) {
 		indirect_light = compute_radiance(approx, geom_id);
