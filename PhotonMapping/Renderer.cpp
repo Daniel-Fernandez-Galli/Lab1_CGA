@@ -4,7 +4,10 @@
 #include <cmath>
 #include <algorithm>
 
+#define RESOLUTION 1
+
 using namespace math;
+using namespace raytracing;
 
 void Renderer::normal_gradient_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b, bool smooth)
 {
@@ -46,7 +49,7 @@ void Renderer::lambertian_surfaces_shading(const RTCRayHit& rayhit, uint32_t& r,
 	constexpr float k_diffuse = 1.0f;
 
 	float light_intensity = k_diffuse * lambertian;
-	light_intensity = (light_intensity < 0.0f) ? 0.0f : light_intensity;
+	light_intensity = std::max(0.0f, light_intensity);
 
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	Vector3 ambient_light = mat.basecolor;
@@ -54,21 +57,37 @@ void Renderer::lambertian_surfaces_shading(const RTCRayHit& rayhit, uint32_t& r,
 	Vector3 aparent_color;
 	aparent_color = k_ambient * ambient_light + mat.basecolor * light_intensity;
 	aparent_color = linear_RGB_to_sRGB(aparent_color);
-	r = aparent_color.x * 255;
-	g = aparent_color.y * 255;
-	b = aparent_color.z * 255;
+	r = (uint32_t)(aparent_color.x * 255);
+	g = (uint32_t)(aparent_color.y * 255);
+	b = (uint32_t)(aparent_color.z * 255);
 }
 
 void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b)
 {
-	Vector3 normal = normal_interpolation(
+
+	Vector3 indirect_light = get_indirect_light(rayhit);
+	Vector3 direct_light = get_direct_light(rayhit);
+
+	Vector3 aparent_color = direct_light + indirect_light;
+
+	aparent_color = linear_RGB_to_sRGB(aparent_color);
+
+	r = (uint32_t)(aparent_color.x * 255);
+	g = (uint32_t)(aparent_color.y * 255);
+	b = (uint32_t)(aparent_color.z * 255);
+}
+
+Vector3 Renderer::get_direct_light(const RTCRayHit& rayhit)
+{
+	Vector3 N = normal_interpolation(
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
 		rayhit.hit.u,
 		rayhit.hit.v
 	);
-	normal = normalize(normal);
+
+	N = normalize(N);
 
 	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
 	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
@@ -76,28 +95,101 @@ void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint
 	Vector3 hit_location = orig + t * dir;
 
 	auto mat = scene.get_material(rayhit.hit.geomID);
+	float k_diffuse = mat.roughness;
+
+	Vector3 direct_light_pos(0.0f, 4.0f, 0.0f); //TODO COMPUTE ACTUAL LIGHT POSITION
+	Vector3 light_dir = direct_light_pos - hit_location;
+	light_dir = normalize(light_dir);
+	float lambertian = dot_product(N, light_dir);
+	float k_direct = k_diffuse * lambertian;
+	k_direct = std::max(0.0f, k_direct);
+
+	return mat.basecolor * k_direct;
+}
+
+Vector3 Renderer::get_indirect_light(const RTCRayHit& rayhit)
+{
+	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
+	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
+	float t = rayhit.ray.tfar;
+	Vector3 hit_location = orig + t * dir;
+	Vector3 approx = truncate(hit_location, RESOLUTION);
+	uint32_t encoded_hit = encode_b1024(approx);
+	unsigned int geom_id = rayhit.hit.geomID;
+
+	Vector3 indirect_light;
+	auto radiance_itr = discrete_radiances.find(approx);
+	if (radiance_itr == discrete_radiances.end()) {
+		indirect_light = compute_radiance(approx, geom_id);
+	}
+	else {
+		Vector3 decoded_hit = decode_b1024(encoded_hit);
+		float dist = norm2(hit_location - decoded_hit);
+		indirect_light = (Vector3)discrete_radiances[approx];
+	}
+	auto mat = scene.get_material(rayhit.hit.geomID);
+	return element_wise_multiplication(mat.basecolor, indirect_light);
+
+}
+
+Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int geom_id)
+{
+	auto mat = scene.get_material(geom_id);
 	Vector3 aparent_color(0.0f, 0.0f, 0.0f);
 
 	float worst_dist = 0.0f;
-	unsigned int N = 100;
-	auto results = global_photonmap->search_nearest(hit_location, N);
-	for (auto &res : results) {
+	unsigned int N = (unsigned int)std::max(1.0f, 0.0001f * photon_count);
+	auto results = global_photonmap->search_nearest(approx_hit_pos, N);
+	for (auto& res : results) {
 		Photon p = global_photonmap->get_photon(res.index);
 		float dist = res.distance_squared;
 		worst_dist = dist < worst_dist ? worst_dist : dist;
 
-		Vector3 light_dir = hit_location - p.get_position();
 		float k_diffuse = mat.roughness;
-		float light_intensity = k_diffuse;
-
-		aparent_color = aparent_color + (mat.basecolor * k_diffuse) / (1000 * dist);
+		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
+		aparent_color = aparent_color + (power * k_diffuse) / (photon_count * dist);
 
 	}
-	aparent_color = aparent_color / (pi * worst_dist);
-	aparent_color = linear_RGB_to_sRGB(aparent_color);
-	r = aparent_color.x * 255;
-	g = aparent_color.y * 255;
-	b = aparent_color.z * 255;
+	aparent_color = aparent_color / (pi * worst_dist * worst_dist);
+
+	discrete_radiances[approx_hit_pos] = aparent_color;
+
+	return aparent_color;
+
+
+}
+
+Vector3 Renderer::specular_reflection(const RTCRayHit& rayhit)
+{
+	auto mat = scene.get_material(rayhit.hit.geomID);
+	float ks = 1.0f - mat.roughness;
+
+	if (ks == 0.0f) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
+
+	Vector3 N = normal_interpolation(
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[1],
+		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[2],
+		rayhit.hit.u,
+		rayhit.hit.v
+	);
+
+	N = normalize(N);
+
+	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
+	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
+	float t = rayhit.ray.tfar;
+	Vector3 hit_location = orig + t * dir;
+
+	Vector3 reflected_dir = reflectRay(-dir, N);
+
+	Ray reflected_ray(hit_location, reflected_dir);
+
+	Hit reflect_hit = cast_ray(reflected_ray);
+
+	return Vector3();
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :
@@ -207,13 +299,15 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 	return {intersection, normal, mat, hasHit};
 }
 
-void Renderer::set_global_photonmap(const KDTree* map)
+void Renderer::set_global_photonmap(const KDTree* map, unsigned int count)
 {
+	photon_count += count;
 	global_photonmap = map;
 }
 
-void Renderer::set_caustics_photonmap(const KDTree* map)
+void Renderer::set_caustics_photonmap(const KDTree* map, unsigned int count)
 {
+	photon_count += count;
 	caustics_photonmap = map;
 }
 

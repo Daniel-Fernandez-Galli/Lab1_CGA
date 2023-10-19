@@ -64,6 +64,11 @@ Vector3 math::operator - (const Vector3& v1, const Vector3& v2) {
 	return Vector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
 }
 
+Vector3 math::operator-(const Vector3& v)
+{
+	return Vector3(-v.x,-v.y,-v.z);
+}
+
 Vector3 math::operator * (const Vector3& v, const float k) {
 	return Vector3(v.x * k, v.y * k, v.z * k);
 }
@@ -97,6 +102,11 @@ Vector3 math::cross_product(const Vector3 &v1, const Vector3 &v2)
 	result = normalize(result);
 
 	return result;
+}
+
+Vector3 math::element_wise_multiplication(const Vector3& v1, const Vector3& v2)
+{
+	return Vector3(v1.x*v2.x, v1.y*v2.y, v1.z*v2.z);
 }
 
 Vector3 math::normalize(const Vector3 &v) {
@@ -136,10 +146,10 @@ Matrix<4, 4> math::quaternion_to_rotation_matrix(const Matrix<4, 1>& quaternion)
 float math::linear_to_sRGB(float value) {
 	float res;
 	if (value <= 0.0031308) {
-		res = 12.92 * value;
+		res = 12.92f * value;
 	}
 	else {
-		res = 1.055 * std::pow(value, 1.0 / 2.2) - 0.055;
+		res = 1.055f * std::pow(value, 1.0f / 2.2f) - 0.055f;
 	}
 	return std::clamp(res, 0.0f, 1.0f);
 }
@@ -214,6 +224,47 @@ Vector3 math::chooseAPointCosineDistribution(Vector3 norm) {
 	return transformed_point;
 }
 
+uint32_t math::encode_b1024(const Vector3& v)
+{
+	int x = (int)(v.x * 10) + 512;
+	int y = (int)(v.y * 10) + 512;
+	int z = (int)(v.z * 10) + 512;
+	return x + y * 1024 + z * 1048576; // 2^20 = 1048576
+}
+
+Vector3 math::decode_b1024(uint32_t v)
+{
+	int z = (int)std::floor(v / 1048576.0f);
+	int y = (int)std::floor((v - z * 1048576) / 1024.0f);
+	int x = v - y * 1024 - z * 1048576;
+	return Vector3(x - 512.0f, y - 512.0f, z - 512.0f)/10.0f;
+}
+
+uint32_t math::encode_b1024_normalized(const Vector3& n)
+{
+	int x = (int)(n.x * 1023);
+	int y = (int)(n.y * 1023);
+	int z = (int)(n.z * 1023);
+	return x + y * 1024 + z * 1048576; // 2^20 = 1048576
+}
+
+Vector3 math::decode_b1024_normalized(uint32_t n)
+{
+	float z = std::floor(n / 1048576.0f);
+	float y = std::floor((n - z * 1048576.0f) / 1024.0f);
+	float x = (n - y * 1024.0f - z * 1048576.0f);
+	return Vector3(x, y, z)/1023.0f;
+}
+
+Vector3 math::truncate(const Vector3 v, unsigned int n)
+{
+	float p = (float)pow(10, n);
+	float x = std::round(v.x * p) / p;
+	float y = std::round(v.y * p) / p;
+	float z = std::round(v.z * p) / p;
+	return Vector3(x,y,z);
+}
+
 
 Vector3 math::reflectRay(Vector3 dir, Vector3 norm) {
 	float NL = math::dot_product(norm, dir);
@@ -229,3 +280,7 @@ float math::max(float a, float b, float c) {
 	return max(a, b);
 }
 
+Color::operator Vector3()
+{
+	return Vector3(fr(), fg(), fb());
+}

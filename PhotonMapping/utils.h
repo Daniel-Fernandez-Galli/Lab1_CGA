@@ -28,11 +28,13 @@ namespace math {
 	};
 
 	struct Vector3 {
+
 		float x, y, z;
 
 		Vector3();
 
 		Vector3(float x, float y, float z);
+
 	};
 
 	bool operator == (const Vector2& v1, const Vector2& v2);
@@ -59,6 +61,8 @@ namespace math {
 
 	Vector3 operator - (const Vector3& v1, const Vector3& v2);
 
+	Vector3 operator - (const Vector3& v);
+
 	Vector3 operator * (const Vector3& v, const float k);
 
 	Vector3 operator * (const float k, const Vector3& v);
@@ -70,6 +74,8 @@ namespace math {
 	float dot_product(const Vector3& v1, const Vector3& v2);
 
 	Vector3 cross_product(const Vector3& v1, const Vector3& v2);
+
+	Vector3 element_wise_multiplication(const Vector3& v1, const Vector3& v2);
 
 	Vector3 normalize(const Vector3& v);
 
@@ -87,6 +93,16 @@ namespace math {
 	Vector3 chooseARandomPointFromAHemisphere(Vector3 norm);
 
 	Vector3 chooseAPointCosineDistribution(Vector3 norm);
+
+	uint32_t encode_b1024(const Vector3& v); // Range: [-51.1f,51.1f] | Presition: 0.1 (per component)
+
+	Vector3 decode_b1024(uint32_t v);
+
+	uint32_t encode_b1024_normalized(const Vector3& n); //Range [0.0f,1.0f] | Presition: 0.0009775171065 (per component)
+
+	Vector3 decode_b1024_normalized(uint32_t n);
+
+	Vector3 truncate(const Vector3 v, unsigned int n = 0);
 
 	/* MATRIX */
 	template <size_t rows, size_t columns>
@@ -159,6 +175,8 @@ struct Color {
 	uint32_t get_rgba() { return r << 24 | g << 16 | b << 8 | a; }
 	uint32_t get_argb() { return a << 24 | r << 16 | g << 8 | b; }
 
+	operator math::Vector3();
+
 };
 
 struct Material {
@@ -209,6 +227,12 @@ namespace raytracing {
 	};
 
 }
+
+template<> struct std::hash<math::Vector3> {
+	std::size_t operator()(math::Vector3 const& v) const noexcept {
+		return math::encode_b1024(v);
+	}
+};
 
 /* Template definitions */
 #ifndef MATRIX_TPP

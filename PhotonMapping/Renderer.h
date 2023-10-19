@@ -11,6 +11,7 @@
 
 #include <embree4/rtcore.h>
 #include <map>
+#include <unordered_map>
 
 class Renderer
 {
@@ -30,11 +31,23 @@ private:
 
 	const KDTree* caustics_photonmap = nullptr;
 
+	unsigned int photon_count = 0;
+
+	std::unordered_map<Vector3, Vector3> discrete_radiances;
+
 	void normal_gradient_shading(const RTCRayHit &rayhit, uint32_t &r, uint32_t& g, uint32_t& b, bool smooth = false);
 
 	void lambertian_surfaces_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
 
 	void photon_mapping_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
+
+	Vector3 get_direct_light(const RTCRayHit& rayhit);
+
+	Vector3 get_indirect_light(const RTCRayHit &rayhit);
+
+	Vector3 compute_radiance(const Vector3 approx_hit_pos, unsigned int geom_id);
+
+	Vector3 specular_reflection(const RTCRayHit &rayhit);
 
 public:
 
@@ -55,9 +68,9 @@ public:
 
 	raytracing::Hit cast_ray(const raytracing::Ray& ray);
 
-	void set_global_photonmap(const KDTree* map);
+	void set_global_photonmap(const KDTree* map, unsigned int count);
 
-	void set_caustics_photonmap(const KDTree* map);
+	void set_caustics_photonmap(const KDTree* map, unsigned int count);
 
 	void move_camera(Direction dir);
 

@@ -76,6 +76,7 @@
       <AdditionalIncludeDirectories>..\libraries\glad;..\libraries\glm;..\libraries\JSON;..\libraries\stb_image;..\libraries\TinyGLTF;..\libraries\Embree\include;..\libraries\nanoflann;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

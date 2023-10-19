@@ -3,14 +3,12 @@
         "generator" : "Khronos glTF Blender I/O v1.6.16",
         "version" : "2.0"
     },
+    "extensionsUsed" : [
+        "KHR_materials_transmission"
+    ],
     "scene" : 0,
     "scenes" : [
         {
-            "extras" : {
-                "sun_pos_properties" : {
-                    "day_of_year" : 290
-                }
-            },
             "name" : "Scene",
             "nodes" : [
                 0,
@@ -182,6 +180,25 @@
                 ],
                 "roughnessFactor" : 0
             }
+        },
+        {
+            "doubleSided" : true,
+            "extensions" : {
+                "KHR_materials_transmission" : {
+                    "transmissionFactor" : 1
+                }
+            },
+            "name" : "GLASS",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.800000011920929,
+                    0.800000011920929,
+                    0.800000011920929,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0
+            }
         }
     ],
     "meshes" : [
@@ -264,7 +281,7 @@
                         "TEXCOORD_0" : 25
                     },
                     "indices" : 22,
-                    "material" : 0
+                    "material" : 5
                 }
             ]
         }
