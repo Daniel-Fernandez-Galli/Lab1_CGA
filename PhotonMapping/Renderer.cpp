@@ -9,7 +9,9 @@
 using namespace math;
 using namespace raytracing;
 
-void Renderer::normal_gradient_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b, bool smooth)
+Vector3 placeholder_light_position(0.0f, 4.0f, 0.0f);
+
+void Renderer::normal_gradient_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b, bool smooth)
 {
 	Vector3 N(rayhit.hit.Ng_x, rayhit.hit.Ng_y, rayhit.hit.Ng_z);
 
@@ -64,11 +66,20 @@ void Renderer::lambertian_surfaces_shading(const RTCRayHit& rayhit, uint32_t& r,
 
 void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint32_t& g, uint32_t& b)
 {
+	auto mat = scene.get_material(rayhit.hit.geomID);
+	if (mat.emission.x == 1) {
+		r = (uint32_t)(mat.emission.x * 255);
+		g = (uint32_t)(mat.emission.y * 255);
+		b = (uint32_t)(mat.emission.z * 255);
+		return;
+	}
+
 
 	Vector3 indirect_light = get_indirect_light(rayhit);
 	Vector3 direct_light = get_direct_light(rayhit);
+	Vector3 specular_reflection = mat.roughness == 0 ? get_specular_reflection(rayhit) : Vector3(0.0f, 0.0f, 0.0f);
 
-	Vector3 aparent_color = direct_light + indirect_light;
+	Vector3 aparent_color = direct_light + indirect_light + specular_reflection;
 
 	aparent_color = linear_RGB_to_sRGB(aparent_color);
 
@@ -97,8 +108,15 @@ Vector3 Renderer::get_direct_light(const RTCRayHit& rayhit)
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	float k_diffuse = mat.roughness;
 
-	Vector3 direct_light_pos(0.0f, 4.0f, 0.0f); //TODO COMPUTE ACTUAL LIGHT POSITION
-	Vector3 light_dir = direct_light_pos - hit_location;
+	Vector3 light_dir = placeholder_light_position - hit_location;
+
+	Ray L(hit_location, -light_dir);
+	Hit L_hit = cast_ray(L);
+
+	if ((L_hit.material.transmission == 0) && (L_hit.material.emission.x == 0)) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
+
 	light_dir = normalize(light_dir);
 	float lambertian = dot_product(N, light_dir);
 	float k_direct = k_diffuse * lambertian;
@@ -150,7 +168,7 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 		aparent_color = aparent_color + (power * k_diffuse) / (photon_count * dist);
 
 	}
-	aparent_color = aparent_color / (20 * pi * worst_dist * worst_dist);
+	aparent_color = aparent_color / (0.3 * pi * worst_dist);
 
 	discrete_radiances[approx_hit_pos] = aparent_color;
 
@@ -159,14 +177,15 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 
 }
 
-Vector3 Renderer::specular_reflection(const RTCRayHit& rayhit)
+Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 {
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	float ks = 1.0f - mat.roughness;
 
-	if (ks == 0.0f) {
-		return Vector3(0.0f, 0.0f, 0.0f);
-	}
+	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
+	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
+	float t = rayhit.ray.tfar;
+	Vector3 hit_location = orig + t * dir;
 
 	Vector3 N = normal_interpolation(
 		scene.get_shading_normals(rayhit.hit.geomID, rayhit.hit.primID)[0],
@@ -178,18 +197,47 @@ Vector3 Renderer::specular_reflection(const RTCRayHit& rayhit)
 
 	N = normalize(N);
 
-	Vector3 orig(rayhit.ray.org_x, rayhit.ray.org_y, rayhit.ray.org_z);
-	Vector3 dir(rayhit.ray.dir_x, rayhit.ray.dir_y, rayhit.ray.dir_z);
-	float t = rayhit.ray.tfar;
-	Vector3 hit_location = orig + t * dir;
+	if (ks != 1.0f) {
+		Ray V(hit_location, camera.get_cam_data().eye_point - hit_location);
+		Ray L(hit_location, placeholder_light_position - hit_location);
+		Vector3 H_dir = normalize(normalize(L.dir - L.orig) + normalize(V.dir - V.orig));
 
-	Vector3 reflected_dir = reflectRay(-dir, N);
+		auto mat = scene.get_material(rayhit.hit.geomID);
+		if (mat.emission.x == 1) {
+			return Vector3(1.0f, 1.0f, 1.0f);
+		}
 
-	Ray reflected_ray(hit_location, reflected_dir);
+		Vector3 indirect_light = get_indirect_light(rayhit);
+		Vector3 direct_light = get_direct_light(rayhit);
 
-	Hit reflect_hit = cast_ray(reflected_ray);
+		Vector3 aparent_color = direct_light + indirect_light;
 
-	return Vector3(0.0f, 0.0f, 0.0f);
+		return aparent_color;
+	}
+
+	Vector3 reflected_dir = reflectRay(-normalize(dir), N);
+
+	struct RTCRayHit rayhit2 {};
+	rayhit2.ray.org_x = hit_location.x;
+	rayhit2.ray.org_y = hit_location.y;
+	rayhit2.ray.org_z = hit_location.z;
+	rayhit2.ray.dir_x = reflected_dir.x;
+	rayhit2.ray.dir_y = reflected_dir.y;
+	rayhit2.ray.dir_z = reflected_dir.z;
+	rayhit2.ray.tnear = 0.01f;
+	rayhit2.ray.tfar = 1000.0f;
+	rayhit2.ray.mask = -1;
+	rayhit2.ray.flags = 0;
+	rayhit2.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+	rayhit2.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+
+	scene.ray_intersect(rayhit2);
+
+	if (rayhit2.hit.geomID == RTC_INVALID_GEOMETRY_ID) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
+
+	return get_specular_reflection(rayhit2);
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :
@@ -233,15 +281,15 @@ void Renderer::trace()
 				//normal_gradient_shading(rayhit, r, g, b);
 				//normal_gradient_shading(rayhit, r, g, b, true);
 				//lambertian_surfaces_shading(rayhit, r,g,b);
-				photon_mapping_shading(rayhit, r,g,b);
+				photon_mapping_shading(rayhit, r, g, b);
 				pixels[600 * y + x] = (0xFF << 24) | (r << 16) | (g << 8) | b; // ARGB
-			}
+		}
 			else {
 				pixels[600 * y + x] = 0x00000000;
 			}
 
-		}
 	}
+}
 
 #ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
 	if (global_photonmap != nullptr) {
@@ -275,7 +323,7 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 
 	bool hasHit = rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
 
-	Vector3 intersection = Vector3(0,0,0);
+	Vector3 intersection = Vector3(0, 0, 0);
 	Vector3 normal = Vector3(0, 0, 0);
 	Material mat;
 
@@ -296,7 +344,7 @@ raytracing::Hit Renderer::cast_ray(const raytracing::Ray& ray)
 
 		mat = scene.get_material(rayhit.hit.geomID);
 	}
-	return {intersection, normal, mat, hasHit};
+	return { intersection, normal, mat, hasHit };
 }
 
 void Renderer::set_global_photonmap(const KDTree* map, unsigned int count)
@@ -329,7 +377,7 @@ Renderer::~Renderer()
 #ifdef PHOTONMAP_DEBUG_API
 
 void Renderer::draw_photon(int x, int y, Color color, float distance) {
-	int size = 1 + (int)(5/(0.001*distance + 1));
+	int size = 1 + (int)(5 / (0.001 * distance + 1));
 	for (int i = -size; i <= size; i++) {
 		for (int j = -size; j <= size; j++) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
@@ -374,7 +422,7 @@ void Renderer::draw_camera(Vector3 position, Color color, float distance) {
 	int py = !std::isnan(screen_pos.y) ? static_cast<int>(screen_pos.y) : -1;
 
 	if ((0 <= px) && (px < 600) && (0 <= py) && (py < 600)) {
-		draw_photon(px, py, Color(255,255,0), 10);
+		draw_photon(px, py, Color(255, 255, 0), 10);
 	}
 
 
