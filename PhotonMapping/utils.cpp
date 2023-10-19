@@ -229,3 +229,17 @@ float math::max(float a, float b, float c) {
 	return max(a, b);
 }
 
+bool math::hasTotalInternalRefraction(Vector3 I, Vector3 N, float ni, float nt) {
+	float nr = ni / nt;
+	float N_I = dot_product(N, I);
+	return 0 > 1 - nr * nr * (1 - N_I * N_I);
+
+}
+
+Vector3 math::calculateT(Vector3 I, Vector3 N, float ni, float nt) {
+
+	float nr = ni / nt;
+	float N_I = dot_product(N, I);
+	Vector3 T = (nr * N_I - sqrt(1 - nr * nr * (1 - N_I * N_I))) * N - nr * I;
+	return T;
+}

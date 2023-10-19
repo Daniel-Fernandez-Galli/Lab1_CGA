@@ -64,11 +64,39 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 			emitPhoton(photon, photonMap);
 		}
 		else if (p < Pd + Ps) { // reflexión especular
-
+			bool objectIsTransparent = true;
 			photon.position = hit.intersection;	
-			photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
-			photon.power = Color(photon.power.r*(s_r/Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
+			if (objectIsTransparent) {
+				float materialRefractionIndex = 1.2;
+				if(dot_product(-1 * photon.direction, hit.normal) > 0){//Estoy afuera
+				
 
+					if (hasTotalInternalRefraction(-1 * photon.direction, hit.normal, 1, materialRefractionIndex)) {//Refracción Total Interna
+						photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+					}
+					else {
+						photon.direction = calculateT(-1 * photon.direction,hit.normal, 1, materialRefractionIndex);
+					}
+
+				}
+				else {//Estoy adentro
+
+					if (hasTotalInternalRefraction(-1 * photon.direction, -1 * hit.normal, materialRefractionIndex, 1)) {//Refracción Total Interna
+						photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+					}
+					else {
+						photon.direction = calculateT(-1 * photon.direction, hit.normal, materialRefractionIndex, 1);
+					}
+
+				}
+
+
+			}
+			else {
+				photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
+			}
+
+			photon.power = Color(photon.power.r * (s_r / Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
 			emitPhoton(photon, photonMap);
 		}else { //absorción
 			photon.position = hit.intersection;

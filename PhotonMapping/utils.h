@@ -145,6 +145,10 @@ namespace math {
 	float max(float a, float b, float c);
 
 	Vector3 reflectRay(Vector3 dir, Vector3 norm);
+
+	bool hasTotalInternalRefraction(Vector3 I, Vector3 N, float ni, float nt);
+
+	Vector3 calculateT(Vector3 I, Vector3 N, float ni, float nt);
 }
 
 /* 32-bit Color */
