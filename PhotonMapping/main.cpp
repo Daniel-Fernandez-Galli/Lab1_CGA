@@ -20,6 +20,7 @@
 #include "PhotonMapper.h"
 #include "Light.h"
 #include "PointLight.h"
+#include "PaneLight.h"
 
 #define ROTATION_SPEED 0.002f
 
@@ -85,11 +86,12 @@ int main(int argc, char* argv[]) {
 	//std::thread trace_tread(trace, std::ref(renderer), sdlrenderer, sdltex, std::ref(running));
 
 	PhotonMapper photonMapper = PhotonMapper(&renderer);
-	PointLight light = PointLight(Vector3(-10, 0, 0), 250, Color(255,255,255));
+	//PointLight light = PointLight(Vector3(0, 9, 0), 1, Color(255, 255, 255));
+	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 9, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
 	std::vector<Light*> lights = { &light };
 	KDTree tree = photonMapper.createGlobalIluminationMap(10000, lights);
 
-	while (running)		// the event loop
+	while (running)		// the ewwwwvent loop
 	{
 		renderer.trace();
 #ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use

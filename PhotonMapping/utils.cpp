@@ -158,7 +158,7 @@ float math::getRandomP() {
 }
 
 float math::getRandomFloat(float lowerBound, float upperBound) {
-	return getRandomP() * (upperBound - lowerBound) + lowerBound;
+	return getRandomP() * std::abs(upperBound - lowerBound) + lowerBound;
 }
 
 Vector3 math::chooseARandomPointFromASphere() {
@@ -166,9 +166,9 @@ Vector3 math::chooseARandomPointFromASphere() {
 	float y = 1;
 	float z = 1;
 	while (x * x + y * y + z * z > 1) {
-		x = getRandomP();
-		y = getRandomP();
-		z = getRandomP();
+		x = getRandomFloat(-1, 1);
+		y = getRandomFloat(-1, 1);
+		z = getRandomFloat(-1, 1);
 	}
 
 	return Vector3(x, y , z);

@@ -29,6 +29,10 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 	Hit hit = {};
 	hit = this->renderer->cast_ray(ray);
 
+	////Delete
+	//photon.position = photon.position + photon.direction * 5;
+	//photonMap.push_back(photon);
+
 	if (hit.hasHit) {
 
 		float p = getRandomP();
@@ -48,7 +52,6 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 
 		if (p < Pd) { // reflexión difusa
 			photon.position = hit.intersection;
-			photon.power = Color(photon.power.r * (d_r / Pd), photon.power.g * (d_g / Pd), photon.power.b * (d_b / Pd));
 
 			if (hit.material.metallic < 1) {
 				photon.direction = -1 * photon.direction;
