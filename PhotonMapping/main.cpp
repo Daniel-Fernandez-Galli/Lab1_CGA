@@ -41,9 +41,9 @@ int main(int argc, char* argv[]) {
 	/* photon kd tree test */
 
 	std::vector<Photon> photons;
-	photons.push_back(Photon({ 1.0f, 2.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 },false));
-	photons.push_back(Photon({ 4.0f, 5.0f, 6.0f }, { 0.0f, 1.0f, 0.0f }, { 0, 255, 0, 255 },false));
-	photons.push_back(Photon({ 7.0f, 8.0f, 9.0f }, { 0.0f, 0.0f, 1.0f }, { 0, 0, 255, 255 },false));
+	photons.push_back(Photon({ 1.0f, 2.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
+	photons.push_back(Photon({ 4.0f, 5.0f, 6.0f }, { 0.0f, 1.0f, 0.0f }, { 0, 255, 0, 255 }));
+	photons.push_back(Photon({ 7.0f, 8.0f, 9.0f }, { 0.0f, 0.0f, 1.0f }, { 0, 0, 255, 255 }));
 	KDTree tree(photons);
 	math::Vector3 query_point(7.0, 6.0, 9.0);
 	std::vector<SearchResult> res = tree.search_radius(query_point, 5.0f);

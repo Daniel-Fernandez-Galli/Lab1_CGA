@@ -51,13 +51,14 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 		if (p < Pd) { // reflexión difusa
 			photon.position = hit.intersection;
 
-			if (hit.material.metallic < 1) {
+			if (hit.material.metallic < 1 && !photon.isFirstHit) {
 				photon.direction = -1 * photon.direction;
 				photonMap.push_back(photon);
 			}
 
 			photon.power = Color(photon.power.r * (d_r / Pd), photon.power.g * (d_g / Pd), photon.power.b * (d_b / Pd));
 			photon.direction = chooseAPointCosineDistribution(hit.normal);
+			photon.isFirstHit = false;
 
 			emitPhoton(photon, photonMap);
 		}
@@ -96,10 +97,13 @@ void PhotonMapper::emitPhoton(Photon photon, vector<Photon>& photonMap) {
 			photon.power = Color(photon.power.r * (s_r / Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
 			emitPhoton(photon, photonMap);
 		}else { //absorción
-			photon.position = hit.intersection;
-			photon.direction = -1 * photon.direction;
+			if (!photon.isFirstHit) {
 
-			photonMap.push_back(photon);
+				photon.position = hit.intersection;
+				photon.direction = -1 * photon.direction;
+
+				photonMap.push_back(photon);
+			}
 		}
 	}
 }
@@ -152,7 +156,7 @@ void PhotonMapper::emitCausticPhoton(Photon photon, vector<Photon>& photonMap) {
 		if (p < Pd) { // reflexión difusa
 			photon.position = hit.intersection;
 
-			if (hit.material.roughness > 0 && photon.hasSpecularReflection) {
+			if (hit.material.roughness > 0 && photon.hasSpecularReflection && !photon.isFirstHit) {
 				photon.direction = -1 * photon.direction;
 				photonMap.push_back(photon);
 			}
@@ -191,6 +195,7 @@ void PhotonMapper::emitCausticPhoton(Photon photon, vector<Photon>& photonMap) {
 				photon.direction = math::reflectRay(-1 * ray.dir, hit.normal);
 			}
 			photon.hasSpecularReflection = true;
+			photon.isFirstHit = false;
 			//photon.power = Color(photon.power.r * (s_r / Ps), photon.power.g * (s_g / Ps), photon.power.b * (s_b / Ps));
 			emitCausticPhoton(photon, photonMap);
 		}
