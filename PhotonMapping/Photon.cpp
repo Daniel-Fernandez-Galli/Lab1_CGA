@@ -1,6 +1,6 @@
 #include "Photon.h"
 
-Photon::Photon(Vector3 pos, Vector3 dir, Color power, bool hasSpecularReflection) : position(pos), direction(dir), power(power), hasSpecularReflection(hasSpecularReflection){}
+Photon::Photon(Vector3 pos, Vector3 dir, Color power) : position(pos), direction(dir), power(power), hasSpecularReflection(false), isFirstHit(true){}
 
 Vector3 Photon::get_position() const
 {

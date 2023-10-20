@@ -17,7 +17,9 @@ public:
 
 	bool hasSpecularReflection;
 
-	Photon(Vector3 pos, Vector3 dir, Color col, bool hasSpecularReflection);
+	bool isFirstHit;
+
+	Photon(Vector3 pos, Vector3 dir, Color col);
 
 	Vector3 get_position() const;
 
