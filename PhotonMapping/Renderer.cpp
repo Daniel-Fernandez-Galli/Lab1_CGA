@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #define RESOLUTION 3
+#define MAX_BOUNCES 10
 
 using namespace math;
 using namespace raytracing;
@@ -77,8 +78,8 @@ void Renderer::photon_mapping_shading(const RTCRayHit& rayhit, uint32_t& r, uint
 
 	Vector3 indirect_light = get_indirect_light(rayhit);
 	Vector3 direct_light = get_direct_light(rayhit);
-	Vector3 specular_reflection = mat.roughness == 0 ? get_specular_reflection(rayhit) : Vector3(0.0f, 0.0f, 0.0f);
-	Vector3 specular_refraction = mat.transmission == 1 ? get_specular_refraction(rayhit) : Vector3(0.0f, 0.0f, 0.0f);
+	Vector3 specular_reflection = (1 - mat.roughness) * get_specular_reflection(rayhit, MAX_BOUNCES);
+	Vector3 specular_refraction = mat.transmission * get_specular_refraction(rayhit, MAX_BOUNCES);
 
 	Vector3 aparent_color = direct_light + indirect_light + specular_reflection + specular_refraction;
 
@@ -198,8 +199,12 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 
 }
 
-Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
+Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit, unsigned int max_bounces)
 {
+	if (max_bounces == 0) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
+
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	float ks = 1.0f - mat.roughness;
 
@@ -210,9 +215,9 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 		}
 
 		Vector3 indirect_light = get_indirect_light(rayhit);
-		//Vector3 direct_light = get_direct_light(rayhit);
+		Vector3 direct_light = get_direct_light(rayhit);
 
-		Vector3 aparent_color = indirect_light;
+		Vector3 aparent_color = direct_light + indirect_light;
 
 		return aparent_color;
 	}
@@ -254,7 +259,7 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 		return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
-	Vector3 spec_refl = get_specular_reflection(rayhit_refl);
+	Vector3 spec_refl = get_specular_reflection(rayhit_refl, max_bounces - 1);
 	if ((mat.metallic == 0.0f) && (spec_refl != Vector3(1.0f, 1.0f, 1.0f)))
 	{
 		//Fresnel-Schlick approximation
@@ -267,15 +272,19 @@ Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit)
 		auto mat2 = scene.get_material(rayhit_refl.hit.geomID);
 		float kt = mat2.transmission;
 		if (kt == 1.0f) {
-			Vector3 spec_refr = get_specular_refraction(rayhit);
+			Vector3 spec_refr = get_specular_refraction(rayhit, max_bounces - 1);
 			spec_refl = spec_refl + (1 - rho_theta) * spec_refr;
 		}
 	}
 	return spec_refl;
 }
 
-Vector3 Renderer::get_specular_refraction(const RTCRayHit& rayhit)
+Vector3 Renderer::get_specular_refraction(const RTCRayHit& rayhit, unsigned int max_bounces)
 {
+	if (max_bounces == 0) {
+		return Vector3(0.0f, 0.0f, 0.0f);
+	}
+
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	float kt = mat.transmission;
 
@@ -285,9 +294,9 @@ Vector3 Renderer::get_specular_refraction(const RTCRayHit& rayhit)
 		}
 
 		Vector3 indirect_light = get_indirect_light(rayhit);
-		//Vector3 direct_light = get_direct_light(rayhit);
+		Vector3 direct_light = get_direct_light(rayhit);
 
-		Vector3 aparent_color = indirect_light;
+		Vector3 aparent_color = direct_light + indirect_light;
 
 		return aparent_color;
 	}
@@ -332,7 +341,7 @@ Vector3 Renderer::get_specular_refraction(const RTCRayHit& rayhit)
 		return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
-	return get_specular_refraction(rayhit_refr);
+	return get_specular_refraction(rayhit_refr, max_bounces - 1);
 }
 
 Renderer::Renderer(SDL_Renderer* renderer, SDL_Window* window, SDL_Texture* texture) :

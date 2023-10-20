@@ -49,9 +49,9 @@ private:
 
 	Vector3 compute_radiance(const Vector3 approx_hit_pos, unsigned int geom_id);
 
-	Vector3 get_specular_reflection(const RTCRayHit &rayhit);
+	Vector3 get_specular_reflection(const RTCRayHit &rayhit, unsigned int max_bounces);
 
-	Vector3 get_specular_refraction(const RTCRayHit& rayhit);
+	Vector3 get_specular_refraction(const RTCRayHit& rayhit, unsigned int max_bounces);
 
 public:
 
