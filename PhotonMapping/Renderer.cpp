@@ -171,7 +171,7 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 
 		float k_diffuse = mat.roughness;
 		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
-		aparent_color = aparent_color + (power * k_diffuse) / (photon_global_count * dist);
+		aparent_color = aparent_color + power * k_diffuse * 0.0001f;
 
 	}
 	aparent_color = aparent_color / (0.3f * pi * worst_dist);
@@ -185,7 +185,7 @@ Vector3 Renderer::compute_radiance(const Vector3 approx_hit_pos, unsigned int ge
 
 		float k_diffuse = mat.roughness;
 		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
-		caustics_color = caustics_color + (power * k_diffuse) / (photon_global_count * dist);
+		caustics_color = caustics_color + power * k_diffuse * 0.001f;
 
 	}
 
