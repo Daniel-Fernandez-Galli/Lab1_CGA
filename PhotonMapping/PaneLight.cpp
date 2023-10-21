@@ -9,6 +9,7 @@ Photon PaneLight::createPhoton(float potencia) {
 	float width = getRandomFloat(- this->width / 2, this->width / 2);
 	float heigh = getRandomFloat(- this->height / 2, this->height / 2);
 	Vector3 center = this->up * heigh + this->right * width + this->center;
-	Vector3 dir = math::chooseAPointCosineDistribution(this->norm);
+	//Vector3 dir = math::chooseAPointCosineDistribution(this->norm);
+	Vector3 dir = math::chooseARandomPointFromASphere();
 	return Photon(center, dir, Color(this->color.r * potencia, this->color.g * potencia, this->color.b * potencia));
 }

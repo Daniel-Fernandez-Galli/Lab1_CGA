@@ -35,23 +35,33 @@ private:
 
 	unsigned int photon_caustic_count = 0;
 
-	std::unordered_map<Vector3, Vector3> discrete_radiances;
+	//std::unordered_map<Vector3, Vector3> discrete_radiances;
 
-	void normal_gradient_shading(const RTCRayHit &rayhit, uint32_t &r, uint32_t& g, uint32_t& b, bool smooth = false);
+	//void normal_gradient_shading(const RTCRayHit &rayhit, uint32_t &r, uint32_t& g, uint32_t& b, bool smooth = false);
 
-	void lambertian_surfaces_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
+	//void lambertian_surfaces_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
 
-	void photon_mapping_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
+	//void photon_mapping_shading(const RTCRayHit &rayhit, uint32_t& r, uint32_t& g, uint32_t& b);
 
-	Vector3 get_direct_light(const RTCRayHit& rayhit);
+	//Vector3 get_direct_light(const RTCRayHit& rayhit);
 
-	Vector3 get_indirect_light(const RTCRayHit &rayhit);
+	//Vector3 get_indirect_light(const RTCRayHit &rayhit);
 
-	Vector3 compute_radiance(const Vector3 approx_hit_pos, unsigned int geom_id);
+	//Vector3 compute_radiance(const Vector3 approx_hit_pos, unsigned int geom_id);
 
-	Vector3 get_specular_reflection(const RTCRayHit &rayhit, unsigned int max_bounces);
+	//Vector3 get_specular_reflection(const RTCRayHit &rayhit, unsigned int max_bounces);
 
-	Vector3 get_specular_refraction(const RTCRayHit& rayhit, unsigned int max_bounces);
+	//Vector3 get_specular_refraction(const RTCRayHit& rayhit, unsigned int max_bounces);
+
+	Vector3 get_outgoing_radiance(const RTCRayHit& rayhit, unsigned int max_bounces);
+
+	Vector3 get_emitted_radiance(const RTCRayHit& rayhit);
+	Vector3 get_reflected_radiance(const RTCRayHit& rayhit, unsigned int max_bounces);
+
+	Vector3 get_direct_illumination(const RTCRayHit& rayhit);
+	Vector3 get_specular_reflection(const RTCRayHit& rayhit, unsigned int max_bounces);
+	Vector3 get_caustics(const RTCRayHit& rayhit);
+	Vector3 get_multiple_diffuse_reflections(const RTCRayHit& rayhit);
 
 public:
 

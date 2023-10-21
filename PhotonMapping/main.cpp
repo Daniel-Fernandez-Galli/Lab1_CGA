@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <omp.h>
 
 #include <iostream>
 #include <fstream>
@@ -23,7 +24,7 @@
 #include "PaneLight.h"
 
 #define ROTATION_SPEED 0.002f
-#define PHOTON_COUNT 2'000'000
+#define PHOTON_COUNT 50'000
 
 int main(int argc, char* argv[]) {
 
@@ -33,26 +34,10 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	/* Embree window init */
+	/* Window init */
 	SDL_Window* sdlwindow = SDL_CreateWindow("Photon Mapping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 600, 600, 0);
 	SDL_Renderer* sdlrenderer = SDL_CreateRenderer(sdlwindow, -1, SDL_RENDERER_ACCELERATED);
 	SDL_Texture* sdltexture = SDL_CreateTexture(sdlrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 600, 600);
-
-	/* photon kd tree test */
-
-	std::vector<Photon> photons;
-	photons.push_back(Photon({ 1.0f, 2.0f, 3.0f }, { 1.0f, 0.0f, 0.0f }, { 255, 0, 0, 255 }));
-	photons.push_back(Photon({ 4.0f, 5.0f, 6.0f }, { 0.0f, 1.0f, 0.0f }, { 0, 255, 0, 255 }));
-	photons.push_back(Photon({ 7.0f, 8.0f, 9.0f }, { 0.0f, 0.0f, 1.0f }, { 0, 0, 255, 255 }));
-	KDTree tree(photons);
-	math::Vector3 query_point(7.0, 6.0, 9.0);
-	std::vector<SearchResult> res = tree.search_radius(query_point, 5.0f);
-	res = tree.search_nearest(query_point, 5);
-	// Print the nearest neighbor and its distance
-	std::cout << "Nearest neighbor index: " << res[0].index << std::endl;
-	std::cout << "Distance to nearest neighbor: " << res[0].distance_squared << std::endl;
-
-	/**/
 
 	bool running = true; // set running to true
 	SDL_Event sdlEvent;  // variable to detect SDL events
@@ -86,7 +71,7 @@ int main(int argc, char* argv[]) {
 
 	PhotonMapper photonMapper = PhotonMapper(&renderer);
 	//PointLight light = PointLight(Vector3(0, 9, 0), 1, Color(255, 255, 255));
-	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 9, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
+	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 5.0f, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
 	std::vector<Light*> lights = { &light };
 	KDTree tree2 = photonMapper.createGlobalIluminationMap(PHOTON_COUNT, lights);
 	KDTree tree3 = photonMapper.createCausticMap(2*PHOTON_COUNT, lights);
@@ -174,7 +159,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
-	//trace_tread.join();
+
 	SDL_Quit();
 	return 0;
 }

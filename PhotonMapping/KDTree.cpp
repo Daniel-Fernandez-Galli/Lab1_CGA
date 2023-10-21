@@ -33,14 +33,18 @@ std::vector<SearchResult> KDTree::search_radius(const Vector3& query, float radi
 
 std::vector<SearchResult> KDTree::search_nearest(const Vector3& query, unsigned int N) const
 {
-	std::vector<uint32_t> indices(N);
-	std::vector<float>    distances(N);
-	static_cast<Index_t*>(index.get())->knnSearch(&query.x, N, &indices[0], &distances[0]);
+	size_t size = std::min((size_t)N, map.photons.size());
+	if (size == 0) {
+		return {};
+	}
+	std::vector<uint32_t> indices(size);
+	std::vector<float>    distances(size);
+	static_cast<Index_t*>(index.get())->knnSearch(&query.x, size, &indices[0], &distances[0]);
 
-	std::vector<SearchResult> indices_and_distances(N);
+	std::vector<SearchResult> indices_and_distances(size);
 	for (int i = 0; i < indices.size(); i++) {
 		SearchResult sr = { indices[i], distances[i] };
-		indices_and_distances[i] = sr;
+		indices_and_distances.push_back(sr);
 	}
 
 	return indices_and_distances;
