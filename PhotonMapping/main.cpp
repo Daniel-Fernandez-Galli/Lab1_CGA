@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
 	PhotonMapper photonMapper = PhotonMapper(&renderer);
 	//PointLight light = PointLight(Vector3(0, 9, 0), 1, Color(255, 255, 255));
-	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 5.0f, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
+	PaneLight light = PaneLight(1, Color(255, 255, 255), Vector3(0, 5.67155f, 0), 5, 5, Vector3(1,0,0), Vector3(0,0,1), Vector3(0,-1,0));
 	std::vector<Light*> lights = { &light };
 	KDTree tree2 = photonMapper.createGlobalIluminationMap(PHOTON_COUNT, lights);
 	KDTree tree3 = photonMapper.createCausticMap(2*PHOTON_COUNT, lights);

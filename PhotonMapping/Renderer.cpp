@@ -18,6 +18,9 @@ float default_ior = 1.450f;
 
 Vector3 Renderer::get_outgoing_radiance(const RTCRayHit& rayhit, unsigned int max_bounces)
 {
+#ifdef PHOTONMAP_DEBUG_API
+	return { 0.0f, 0.0f, 0.0f };
+#endif
 	return get_emitted_radiance(rayhit) + get_reflected_radiance(rayhit, max_bounces);
 }
 
@@ -31,7 +34,7 @@ Vector3 Renderer::get_reflected_radiance(const RTCRayHit& rayhit, unsigned int m
 {
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	Vector3 outgoing_radiance(0.0f, 0.0f, 0.0f);
-	outgoing_radiance = outgoing_radiance + get_direct_illumination(rayhit);
+	outgoing_radiance = outgoing_radiance + 0.5f * get_direct_illumination(rayhit);
 	if (max_bounces != 0) {
 		if (mat.roughness == 0.0f) {
 			outgoing_radiance = outgoing_radiance + get_specular_reflection(rayhit, max_bounces);
@@ -40,7 +43,9 @@ Vector3 Renderer::get_reflected_radiance(const RTCRayHit& rayhit, unsigned int m
 			outgoing_radiance = outgoing_radiance + get_specular_refraction(rayhit, max_bounces);
 		}
 	}
-	outgoing_radiance = outgoing_radiance + get_indirect_light(rayhit);
+	Vector3 indirect_light = get_indirect_light(rayhit);
+
+	outgoing_radiance = outgoing_radiance + indirect_light;
 	return outgoing_radiance;
 }
 
@@ -213,7 +218,11 @@ Vector3 Renderer::get_indirect_light(const RTCRayHit& rayhit)
 		return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
-	return compute_radiance(hit_location, geom_id);
+	auto mat = scene.get_material(rayhit.hit.geomID);
+
+	Vector3 photons_radiance = compute_radiance(hit_location, geom_id);
+
+	return element_wise_multiplication(mat.basecolor, photons_radiance);
 
 }
 
@@ -223,19 +232,20 @@ Vector3 Renderer::compute_radiance(const Vector3 hit_pos, unsigned int geom_id)
 	Vector3 aparent_color(0.0f, 0.0f, 0.0f);
 
 	float worst_dist = 0.0f;
-	unsigned int N = (unsigned int)std::max(1.0f, 0.0001f * photon_global_count);
-	auto results = global_photonmap->search_nearest(hit_pos, N);
+	unsigned int N = (unsigned int)std::max(1.0f, 0.00001f * photon_global_count);
+	auto results = global_photonmap->search_radius(hit_pos, 0.5f);
 	for (auto& res : results) {
 		Photon p = global_photonmap->get_photon(res.index);
 		float dist = res.distance_squared;
 		worst_dist = dist < worst_dist ? worst_dist : dist;
 
-		float k_diffuse = mat.roughness;
 		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
-		aparent_color = aparent_color + power * k_diffuse * (2000.0f / photon_global_count);
+		aparent_color = aparent_color + power;
 
 	}
+	aparent_color = aparent_color * mat.roughness / (100.0f * N);
 
+	worst_dist = 0.0f;
 	Vector3 caustics_color(0.0f, 0.0f, 0.0f);
 	results = caustics_photonmap->search_nearest(hit_pos, N);
 	for (auto& res : results) {
@@ -245,10 +255,10 @@ Vector3 Renderer::compute_radiance(const Vector3 hit_pos, unsigned int geom_id)
 
 		float k_diffuse = mat.roughness;
 		Vector3 power(p.get_power().fr(), p.get_power().fg(), p.get_power().fb());
-		caustics_color = caustics_color + power * k_diffuse * (2000.0f / photon_caustic_count);
+		caustics_color = caustics_color + power * k_diffuse;
 	}
 
-	aparent_color = aparent_color + (caustics_color / worst_dist);
+	aparent_color = aparent_color + (caustics_color / (worst_dist * 50.0f * N));
 
 	return aparent_color;
 
@@ -283,7 +293,7 @@ void Renderer::commit_scene()
 void Renderer::trace()
 {
 	int x, y;
-#pragma omp critical(discrete_radiances) for private(y)
+#pragma omp for private(y)
 	for (x = 0; x < 600; x++) {
 		for (y = 0; y < 600; y++) {
 
@@ -315,7 +325,7 @@ void Renderer::trace()
 
 #ifdef PHOTONMAP_DEBUG_API // Uncomment the definition in Renderer.h to use
 	if (global_photonmap != nullptr) {
-		//debug_display_photons(*global_photonmap);
+		debug_display_photons(*global_photonmap);
 	}
 	if (caustics_photonmap != nullptr) {
 		debug_display_photons(*caustics_photonmap);
@@ -402,13 +412,13 @@ Renderer::~Renderer()
 #ifdef PHOTONMAP_DEBUG_API
 
 void Renderer::draw_photon(int x, int y, Color color, float distance) {
-	int size = 1 + (int)(5 / (0.001 * distance + 1));
+	int size = 0;// 1 + (int)(5 / (0.001 * distance + 1));
 	for (int i = -size; i <= size; i++) {
 		for (int j = -size; j <= size; j++) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
 				uint32_t fillColor = color.get_argb();
 				uint32_t borderColor = Color(0, 0, 0).get_argb();
-				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? borderColor : fillColor;
+				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? fillColor : fillColor;
 			}
 		}
 	}

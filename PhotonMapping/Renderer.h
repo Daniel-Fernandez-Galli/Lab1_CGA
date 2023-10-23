@@ -45,7 +45,6 @@ private:
 	Vector3 get_direct_illumination(const RTCRayHit& rayhit);
 	Vector3 get_specular_reflection(const RTCRayHit& rayhit, unsigned int max_bounces);
 	Vector3 get_specular_refraction(const RTCRayHit& rayhit, unsigned int max_bounces);
-	Vector3 get_caustics(const RTCRayHit& rayhit);
 	Vector3 get_indirect_light(const RTCRayHit& rayhit);
 
 public:
