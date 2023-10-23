@@ -74,6 +74,8 @@ public:
 
 	void transform_camera(math::Matrix<4, 4> transform, bool local_origin = false, bool local_axis = false);
 
+	void to_file();
+
 	~Renderer();
 
 #ifdef PHOTONMAP_DEBUG_API

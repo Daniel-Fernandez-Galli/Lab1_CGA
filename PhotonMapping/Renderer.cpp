@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <omp.h>
 #include <iostream>
+#include "FreeImage.h"
 
 #define RESOLUTION 3
 #define MAX_BOUNCES 3
@@ -14,6 +15,9 @@ using namespace math;
 using namespace raytracing;
 
 Vector3 placeholder_light_position(0.0f, 9.67155f, 0.0f);
+Vector3 placeholder_light_v1(0.0f, 0.0f, 1.85435f);
+Vector3 placeholder_light_v2(1.85435f, 0.0f, 0.0f);
+
 float default_ior = 1.450f;
 
 Vector3 Renderer::get_outgoing_radiance(const RTCRayHit& rayhit, unsigned int max_bounces)
@@ -69,21 +73,31 @@ Vector3 Renderer::get_direct_illumination(const RTCRayHit& rayhit)
 	auto mat = scene.get_material(rayhit.hit.geomID);
 	float k_diffuse = mat.roughness;
 
-	Vector3 light_dir = placeholder_light_position - hit_location;
+	Vector3 total_direct_light(0.0f, 0.0f, 0.0f);
+	float shadow = 0.0f;
+	int ray_count = 100;
+	for (int i = 0; i < ray_count; i++) {
 
-	light_dir = normalize(light_dir);
-	float lambertian = dot_product(N, light_dir);
-	float k_direct = k_diffuse * lambertian;
-	k_direct = std::max(0.0f, k_direct);
+		Vector3 light_random_point = placeholder_light_position + 
+			getRandomFloat(-1.0f, 1.0f) * placeholder_light_v1 +
+			getRandomFloat(-1.0f, 1.0f) * placeholder_light_v2;
+		Vector3 light_dir = light_random_point - hit_location;
 
-	Vector3 direct_light = mat.basecolor * k_direct;
+		light_dir = normalize(light_dir);
+		float lambertian = dot_product(N, light_dir);
+		float k_direct = k_diffuse * lambertian;
+		k_direct = std::max(0.0f, k_direct);
+		Vector3 direct_light = mat.basecolor * k_direct;
 
-	Ray L(hit_location, light_dir);
-	Hit L_hit = cast_ray(L);
+		Ray L(hit_location, light_dir);
+		Hit L_hit = cast_ray(L);
 
-	direct_light = element_wise_multiplication(direct_light, L_hit.material.emission) + direct_light * L_hit.material.transmission * (1/default_ior);
+		shadow =  L_hit.material.transmission * (1 / default_ior);
 
-	return direct_light;
+		total_direct_light = total_direct_light + direct_light * shadow + element_wise_multiplication(direct_light, L_hit.material.emission);
+	}
+
+	return total_direct_light / (ray_count);
 }
 
 Vector3 Renderer::get_specular_reflection(const RTCRayHit& rayhit, unsigned int max_bounces)
@@ -304,10 +318,7 @@ void Renderer::trace()
 			if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID)
 			{
 				uint32_t r, g, b;
-				//normal_gradient_shading(rayhit, r, g, b);
-				//normal_gradient_shading(rayhit, r, g, b, true);
-				//lambertian_surfaces_shading(rayhit, r,g,b);
-				//photon_mapping_shading(rayhit, r, g, b);
+				
 				Vector3 pixel_color = get_outgoing_radiance(rayhit, MAX_BOUNCES);
 				pixel_color = linear_RGB_to_sRGB(pixel_color);
 
@@ -404,6 +415,35 @@ void Renderer::transform_camera(Matrix<4, 4> transform, bool local_origin, bool 
 	camera.transform(transform, local_origin, local_axis);
 }
 
+void Renderer::to_file()
+{
+	FreeImage_Initialise();
+	FIBITMAP* image = FreeImage_AllocateT(FIT_BITMAP, 600, 600, 32);
+	for (int y = 0; y < 600; ++y) {
+		for (int x = 0; x < 600; ++x) {
+			uint32_t argbColor = pixels[600 * (600 - y - 1) + x];
+			BYTE r = (argbColor >> 16) & 0xFF;
+			BYTE g = (argbColor >> 8) & 0xFF;
+			BYTE b = argbColor & 0xFF;
+			BYTE a = (argbColor >> 24) & 0xFF;
+			RGBQUAD color = { b, g, r, a };
+			FreeImage_SetPixelColor(image, x, y, &color);
+		}
+	}
+
+	if (FreeImage_Save(FIF_PNG, image, "../output/output.png", 0)) {
+		std::cout << "Image saved successfully." << std::endl;
+	}
+	else {
+		std::cerr << "Failed to save the image." << std::endl;
+	}
+
+	// Cleanup
+	FreeImage_Unload(image);
+	FreeImage_DeInitialise();
+
+}
+
 Renderer::~Renderer()
 {
 	delete[] pixels;
@@ -418,7 +458,7 @@ void Renderer::draw_photon(int x, int y, Color color, float distance) {
 			if ((0 <= y + j) && (y + j < 600) && (0 <= x + i) && (x + i < 600)) {
 				uint32_t fillColor = color.get_argb();
 				uint32_t borderColor = Color(0, 0, 0).get_argb();
-				pixels[600 * (y + j) + (x + i)] = (std::abs(i) == size || std::abs(j) == size) ? fillColor : fillColor;
+				pixels[600 * (y + j) + (x + i)] = 0xFF000000 | fillColor;
 			}
 		}
 	}
@@ -467,5 +507,3 @@ void Renderer::draw_camera(Vector3 position, Color color, float distance) {
 }
 
 #endif // PHOTONMAP_DEBUG_API
-
-

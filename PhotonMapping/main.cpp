@@ -3,7 +3,6 @@
 #include <glad/glad.h>
 #include "SDL.h"
 #include "SDL_opengl.h"
-#include "FreeImage.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -108,6 +107,9 @@ int main(int argc, char* argv[]) {
 					break;
 				case SDLK_e:
 					renderer.move_camera(Direction::UP);
+					break;
+				case SDLK_SPACE:
+					renderer.to_file();
 					break;
 				case SDLK_ESCAPE:
 					running = false;
